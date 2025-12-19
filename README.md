@@ -20,3 +20,8 @@ The diagram below indicates which files a script takes in, and which files are p
 ## VTR Integration
 Currently uses VTR commit: a632849110cf2dfea3d126993dbf46f010c84072
 
+## License
+
+This project is licensed under the MIT License.
+
+It includes third-party code released under the MIT License by their respective authors. See source file headers for details.
