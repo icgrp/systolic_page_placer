@@ -1,0 +1,1 @@
+The code in vtr_integration/plugin/plugin.cpp should be appended to the end of the vpr_place() function in $VTR_ROOT/vpr/src/base/vpr_api.cpp.

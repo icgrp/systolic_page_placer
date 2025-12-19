@@ -1,0 +1,13 @@
+build/
+
+synth/
+
+versal_implementation/
+paper_*/
+
+*.vvp
+*.csv
+*.fst
+
+__pycache__
+.DS_Store

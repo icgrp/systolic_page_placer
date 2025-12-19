@@ -1,0 +1,10 @@
+$fwrite(trace_file,"{state},{ty},{x},{y},%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d,%0d\n",
+dut.sub_placer_{ty}_inst.pe_x{x}_y{y}.blk_id,
+dut.sub_placer_{ty}_inst.pe_x{x}_y{y}.X,
+dut.sub_placer_{ty}_inst.pe_x{x}_y{y}.Y,
+dut.sub_placer_{ty}_inst.pe_x{x}_y{y}.sum_px,
+dut.sub_placer_{ty}_inst.pe_x{x}_y{y}.sum_py,
+dut.sub_placer_{ty}_inst.pe_x{x}_y{y}.temp_blk_id,
+dut.sub_placer_{ty}_inst.pe_x{x}_y{y}.temp_coord[2*$clog2({B_t} + 1) - 1:$clog2({B_t} + 1)],
+dut.sub_placer_{ty}_inst.pe_x{x}_y{y}.temp_coord[$clog2({B_t} + 1) - 1:0],
+dut.sub_placer_{ty}_inst.pe_x{x}_y{y}.temp);
