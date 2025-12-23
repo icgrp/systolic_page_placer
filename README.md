@@ -6,6 +6,7 @@
 - Run `make init` to create systolic info based off of the benchmark blif file.
 - Run `make pysim` to run a Python behavioral simulation of the systolic placer, and validate the trace.
 - Run `make rtl` to create the RTL for the systolic placer and the testbench.
+- Run `make bit` to create the bitstream for the RTL simulation or Versal accelerator.
 - Run `make rtlsim` to run the RTL simulation of the systolic placer, and validate the trace.
 - Run `make diff` to compare the trace files between the behavioral simulation and the RTL simulation.
 - Run `make route pysim` to route the design placed by the behavioral simulator.
