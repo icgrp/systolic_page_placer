@@ -2,7 +2,8 @@
 
 ## Makefile
 
-- Run `make init` to create systolic info based off of a benchmark blif file.
+- Run `make synth` to synthesize the benchmark blif file from a Verilog benchmark. 
+- Run `make init` to create systolic info based off of the benchmark blif file.
 - Run `make pysim` to run a Python behavioral simulation of the systolic placer, and validate the trace.
 - Run `make rtl` to create the RTL for the systolic placer and the testbench.
 - Run `make rtlsim` to run the RTL simulation of the systolic placer, and validate the trace.
