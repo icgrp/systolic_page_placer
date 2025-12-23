@@ -1,9 +1,13 @@
 # Benchmark
-BENCHMARK_BLIF=#/home/something/benchmark.blif
+BENCHMARK_VERILOG=vtr_integration/dummy_benchmark/dummy_benchmark.v
+
+# Don't touch
+BENCHMARK_NAME=$(basename $(notdir $(BENCHMARK_VERILOG)))
+BENCHMARK_BLIF=$(CURDIR)/build/synth/$(BENCHMARK_NAME).blif
 
 # Placer parameters
-WIDTH=10
-HEIGHT=10
+WIDTH=35
+HEIGHT=35
 N_IO=800
 UPDATES=100
 SWAPS_PER_UPDATE=10
@@ -20,6 +24,12 @@ PLACER_INIT=build/placer_init/placer_init
 # Router options
 ROUTE_CHAN_WIDTH=200
 
+
+#######################################################################################################################################################################################################
+synth:	
+	@mkdir -p build/synth
+	$$VTR_ROOT/vtr_flow/scripts/run_vtr_flow.py $(BENCHMARK_VERILOG) $(SYSTOLIC_ARCH_TEMPLATE) -start parmys -end abc -temp_dir $(CURDIR)/build/synth
+	cp build/synth/$(BENCHMARK_NAME).abc.blif build/synth/$(BENCHMARK_NAME).blif
 #######################################################################################################################################################################################################
 init:
 	@mkdir -p build/pnr
@@ -51,7 +61,7 @@ bit:
 	@python3 scripts/gen_bitstream.py ${SYSTOLIC_GRID_INFO} $(SYSTOLIC_NETLIST_INFO) ${SYSTOLIC_IO_PLACE} $(PLACER_INIT) build/generated_rtl/params.txt build/bitstream/bitstream.txt --num_of_updates $(UPDATES) --swaps_per_update $(SWAPS_PER_UPDATE) --initial_temp $(INITIAL_TEMP)
 #######################################################################################################################################################################################################
 rtlsim:
-#   simulation
+#	simulation
 	@mkdir -p build/rtlsim_out/
 	@iverilog -Wall -o sim.vvp build/generated_rtl/tb.sv build/generated_rtl/placer.sv build/generated_rtl/sub_placer_modules/* build/generated_rtl/specialized_pe_modules/* src/* -s test_tb
 	@vvp sim.vvp -fst
@@ -63,7 +73,7 @@ rtlsim:
 	@cat build/rtlsim_out/unload.place $(SYSTOLIC_IO_PLACE) > build/rtlsim_out/complete_unload.place
 
 check:
-#   check   
+#	check   
 	@python3 scripts/check_trace.py ${SYSTOLIC_GRID_INFO} $(SYSTOLIC_NETLIST_INFO) ${SYSTOLIC_IO_PLACE} build/rtlsim_out/trace.csv build/rtlsim_out/
 	@cat build/rtlsim_out/initial_systolic.place $(SYSTOLIC_IO_PLACE) > build/rtlsim_out/complete_initial.place
 	@cat build/rtlsim_out/final_systolic.place $(SYSTOLIC_IO_PLACE) > build/rtlsim_out/complete_final.place
