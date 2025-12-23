@@ -72,7 +72,6 @@ rtlsim:
 	@python3 scripts/process_unload.py ${SYSTOLIC_GRID_INFO} $(SYSTOLIC_NETLIST_INFO) build/generated_rtl/params.txt build/rtlsim_out/unload.txt build/rtlsim_out/unload.place
 	@cat build/rtlsim_out/unload.place $(SYSTOLIC_IO_PLACE) > build/rtlsim_out/complete_unload.place
 
-check:
 #	check   
 	@python3 scripts/check_trace.py ${SYSTOLIC_GRID_INFO} $(SYSTOLIC_NETLIST_INFO) ${SYSTOLIC_IO_PLACE} build/rtlsim_out/trace.csv build/rtlsim_out/
 	@cat build/rtlsim_out/initial_systolic.place $(SYSTOLIC_IO_PLACE) > build/rtlsim_out/complete_initial.place
