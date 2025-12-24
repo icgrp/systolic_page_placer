@@ -26,4 +26,4 @@ Currently uses VTR commit: a632849110cf2dfea3d126993dbf46f010c84072
 
 This project is licensed under the MIT License.
 
-It includes third-party code released under the MIT License by their respective authors. See source file headers for details.
+It includes third-party code in `benchmarks/` and `vtr_integration/arch/` released under various licenses by their respective authors. See source files for details.
