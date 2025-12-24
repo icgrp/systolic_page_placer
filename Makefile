@@ -1,5 +1,5 @@
 # Benchmark
-BENCHMARK_VERILOG=vtr_integration/dummy_benchmark/dummy_benchmark.v
+BENCHMARK_VERILOG=benchmarks/arm_core.v
 
 # Don't touch
 BENCHMARK_NAME=$(basename $(notdir $(BENCHMARK_VERILOG)))
