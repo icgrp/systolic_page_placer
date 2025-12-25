@@ -1,5 +1,12 @@
 # systolic_page_placer
 
+## Requirements
+- Verilog to Routing
+- Icarus Verilog
+- Python3
+  - matplotlib
+  - pyserial
+
 ## Makefile
 
 - Run `make synth` to synthesize the benchmark blif file from a Verilog benchmark. 
