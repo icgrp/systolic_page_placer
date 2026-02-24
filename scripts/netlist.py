@@ -9,16 +9,16 @@ class Block:
         self.weights = Counter(connections)
 ########################################################################################
 class Netlist:
-    name = ""
-    file_hash = ""
-
-    name_to_block = {}
-    name_to_vtr_blk_id = {}
-
-    systolic_type_id_to_name = {}
-    netlist_types = set()
-    ####################################################################################
     def __init__(self,filename):
+        self.name = ""
+        self.file_hash = ""
+        
+        self.name_to_block = {}
+        self.name_to_vtr_blk_id = {}
+
+        self.systolic_type_id_to_name = {}
+        self.netlist_types = set()
+        ################################################################################
         with open(filename,"r") as f:
             _, self.name, _, self.hash = f.readline().split()
             f.readline()
