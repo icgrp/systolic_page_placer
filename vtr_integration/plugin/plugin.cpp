@@ -59,16 +59,36 @@ if(fp != NULL)
         fprintf(fp,"%s ",cluster_ctx.clb_nlist.block_name(blk_id).c_str());
         fprintf(fp,"%s ",cluster_ctx.clb_nlist.block_type(blk_id)->name.c_str());
         fprintf(fp,"%d",blk_id);
-        for(auto& pin_id : cluster_ctx.clb_nlist.block_pins(blk_id))
+        for(auto& pin_id : cluster_ctx.clb_nlist.block_input_pins(blk_id))
         {
             auto net_id = cluster_ctx.clb_nlist.pin_net(pin_id);
-            for(auto& net_pin : cluster_ctx.clb_nlist.net_pins(net_id))
+            auto net_driver = cluster_ctx.clb_nlist.net_driver(net_id);
+            auto connected_blk_id = cluster_ctx.clb_nlist.pin_block(net_driver);
+            if(connected_blk_id != blk_id)
             {
-                auto connected_blk_id = cluster_ctx.clb_nlist.pin_block(net_pin);
+                fprintf(fp,",%s",cluster_ctx.clb_nlist.block_name(connected_blk_id).c_str());
+            }
+        }
+        for(auto& pin_id : cluster_ctx.clb_nlist.block_output_pins(blk_id))
+        {
+            auto net_id = cluster_ctx.clb_nlist.pin_net(pin_id);
+            for(auto& sink_pin : cluster_ctx.clb_nlist.net_sinks(net_id))
+            {
+                auto connected_blk_id = cluster_ctx.clb_nlist.pin_block(sink_pin);
                 if(connected_blk_id != blk_id)
                 {
                     fprintf(fp,",%s",cluster_ctx.clb_nlist.block_name(connected_blk_id).c_str());
                 }
+            }
+        }
+        for(auto& pin_id : cluster_ctx.clb_nlist.block_clock_pins(blk_id))
+        {
+            auto net_id = cluster_ctx.clb_nlist.pin_net(pin_id);
+            auto net_driver = cluster_ctx.clb_nlist.net_driver(net_id);
+            auto connected_blk_id = cluster_ctx.clb_nlist.pin_block(net_driver);
+            if(connected_blk_id != blk_id)
+            {
+                fprintf(fp,",%s",cluster_ctx.clb_nlist.block_name(connected_blk_id).c_str());
             }
         }
         fprintf(fp,"\n");
