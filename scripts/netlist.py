@@ -11,7 +11,7 @@ class Block:
 class Netlist:
     def __init__(self,filename):
         self.name = ""
-        self.file_hash = ""
+        self.hash = ""
         
         self.name_to_block = {}
         self.name_to_vtr_blk_id = {}
