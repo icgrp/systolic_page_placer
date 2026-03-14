@@ -177,8 +177,8 @@ def calc_cost(grid_info,netlist,io_placement,state):
     two_way_cost = 0
     for block in netlist.name_to_block.values():
         for connection_name in block.connections:
-            two_way_cost += math.pow(((placement_dict[block.name].x - placement_dict[connection_name].x))*netlist.name_to_block[block.name].weights[connection_name],2)
-            two_way_cost += math.pow(((placement_dict[block.name].y - placement_dict[connection_name].y))*netlist.name_to_block[block.name].weights[connection_name],2)
+            two_way_cost += math.pow(((placement_dict[block.name].x - placement_dict[connection_name].x)),2)*netlist.name_to_block[block.name].weights[connection_name]
+            two_way_cost += math.pow(((placement_dict[block.name].y - placement_dict[connection_name].y),2))*netlist.name_to_block[block.name].weights[connection_name]
     cost = (two_way_cost/2)
     return cost
 ########################################################################################
