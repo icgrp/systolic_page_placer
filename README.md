@@ -5,7 +5,9 @@
 - [Icarus Verilog](https://github.com/steveicarus/iverilog)
 - Python3
   - matplotlib
-  - pyserial
+  - pyserial (if running the physical Versal accelerator)
+- Vivado and Vitis 2021.2 (if running the physical Versal accelerator)
+- Versal VCK-190 ES-1 development board (if running the physical accelerator)
  
 ## Setup
 - Git clone this repository
