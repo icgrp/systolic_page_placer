@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "platform.h"
 #include "xil_printf.h"
 #include "xparameters.h"
 #include "xuartpsv.h"
@@ -27,8 +26,6 @@ int main()
 {
 	//*********************************************************************
 	// Init
-    init_platform();
-
     XGpio_Config *gpio_cfg_ptr;
     XGpio handshake_device;
 
@@ -62,8 +59,6 @@ int main()
 		read_placement();
 		//*****************************************************************
 	}
-
-    cleanup_platform();
     return 0;
 }
 //#########################################################################
