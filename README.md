@@ -41,7 +41,7 @@
 - Connect the Versal VCK-190 ES-1 via USB to your machine
 - Power on the Versal
 - In this repository, run `xsct` in the terminal
-- At the xsct prompt, run `source versal_implementation/connect.tcl`. This will configure the Versal.
+- At the xsct prompt, run `source versal_implementation/connect.tcl`. This will configure the Versal
 - At the xsct prompt, run `exit`
 - In our repository, run `make synth` to synthesize a blif file the default Verilog benchmark
 - Run `make init` to create metadata about the systolic accelerator, as well as produce benchmark specific files to be processed by the accelerator
