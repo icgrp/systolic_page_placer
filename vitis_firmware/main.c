@@ -26,6 +26,7 @@ int main()
 {
 	//*********************************************************************
 	// Init
+
     XGpio_Config *gpio_cfg_ptr;
     XGpio handshake_device;
 
@@ -59,6 +60,7 @@ int main()
 		read_placement();
 		//*****************************************************************
 	}
+
     return 0;
 }
 //#########################################################################
@@ -72,21 +74,46 @@ void request_packet()
 void read_packet(u32* packet)
 {
 	char data[4];
-	u32 index;
-	for(u32 x = 0; x < PACKET_LENGTH; x++)
+	u32 data_index;
+	u32 run_length;
+	u32 val;
+	u32 packet_index = 0;
+	while(packet_index < PACKET_LENGTH)
 	{
-		index = 0;
+		// read run length
+		data_index = 0;
 		while(1)
 		{
-			data[index] = inbyte();
-			if(data[index] == '\n')
+			data[data_index] = inbyte();
+			if(data[data_index] == '\n')
 			{
 				break;
 			}
-			index += 1;
+			data_index += 1;
 		}
-		packet[x] = strtol(data,NULL,16);
+		run_length = strtol(data,NULL,16);
+
+		// read value
+		data_index = 0;
+		while(1)
+		{
+			data[data_index] = inbyte();
+			if(data[data_index] == '\n')
+			{
+				break;
+			}
+			data_index += 1;
+		}
+		val = strtol(data,NULL,16);
+
+		// fill packet
+		for(u32 i = 0; i < run_length; i++)
+		{
+			packet[packet_index] = val;
+			packet_index += 1;
+		}
 	}
+
 }
 //#########################################################################
 // Write packet to BRAM

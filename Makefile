@@ -59,6 +59,7 @@ firmware:
 bit:
 	@mkdir -p build/bitstream
 	@python3 scripts/gen_bitstream.py ${SYSTOLIC_GRID_INFO} $(SYSTOLIC_NETLIST_INFO) ${SYSTOLIC_IO_PLACE} $(PLACER_INIT) build/generated_rtl/params.txt build/bitstream/bitstream.txt --num_of_updates $(UPDATES) --swaps_per_update $(SWAPS_PER_UPDATE) --initial_temp $(INITIAL_TEMP)
+	@python3 scripts/compress_bitstream.py build/bitstream/bitstream.txt build/bitstream/compressed_bitstream.txt
 #######################################################################################################################################################################################################
 rtlsim:
 #	simulation
@@ -80,8 +81,8 @@ rtlsim:
 #######################################################################################################################################################################################################
 pysim:
 #	simulation
-	@mkdir -p build/pysim_out/
-	@python3 scripts/pysim.py --updts $(UPDATES) --swps $(SWAPS_PER_UPDATE) --temp $(INITIAL_TEMP) ${SYSTOLIC_GRID_INFO} $(SYSTOLIC_NETLIST_INFO) $(SYSTOLIC_IO_PLACE) $(PLACER_INIT) build/pysim_out
+# 	@mkdir -p build/pysim_out/
+# 	@python3 scripts/pysim.py --updts $(UPDATES) --swps $(SWAPS_PER_UPDATE) --temp $(INITIAL_TEMP) ${SYSTOLIC_GRID_INFO} $(SYSTOLIC_NETLIST_INFO) $(SYSTOLIC_IO_PLACE) $(PLACER_INIT) build/pysim_out
 
 #	check
 	@python3 scripts/check_trace.py ${SYSTOLIC_GRID_INFO} $(SYSTOLIC_NETLIST_INFO) ${SYSTOLIC_IO_PLACE} build/pysim_out/behavioral_trace.csv build/pysim_out/ --acceptance_ratio_history build/pysim_out/acceptance_ratio_history.txt
@@ -93,7 +94,7 @@ diff_trace:
 #######################################################################################################################################################################################################
 fpga:
 	@mkdir -p build/fpga_out/
-	@python3 scripts/load.py build/bitstream/bitstream.txt build/fpga_out/unload.txt
+	@python3 scripts/load.py build/bitstream/compressed_bitstream.txt build/fpga_out/unload.txt build/generated_rtl/params.txt ${UPDATES} ${SWAPS_PER_UPDATE} 200000000
 	@python3 scripts/process_unload.py ${SYSTOLIC_GRID_INFO} $(SYSTOLIC_NETLIST_INFO) build/generated_rtl/params.txt build/fpga_out/unload.txt build/fpga_out/unload.place
 	@cat build/fpga_out/unload.place $(SYSTOLIC_IO_PLACE) > build/fpga_out/complete_unload.place
 #######################################################################################################################################################################################################
