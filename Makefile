@@ -81,8 +81,8 @@ rtlsim:
 #######################################################################################################################################################################################################
 pysim:
 #	simulation
-# 	@mkdir -p build/pysim_out/
-# 	@python3 scripts/pysim.py --updts $(UPDATES) --swps $(SWAPS_PER_UPDATE) --temp $(INITIAL_TEMP) ${SYSTOLIC_GRID_INFO} $(SYSTOLIC_NETLIST_INFO) $(SYSTOLIC_IO_PLACE) $(PLACER_INIT) build/pysim_out
+	@mkdir -p build/pysim_out/
+	@python3 scripts/pysim.py --updts $(UPDATES) --swps $(SWAPS_PER_UPDATE) --temp $(INITIAL_TEMP) ${SYSTOLIC_GRID_INFO} $(SYSTOLIC_NETLIST_INFO) $(SYSTOLIC_IO_PLACE) $(PLACER_INIT) build/pysim_out
 
 #	check
 	@python3 scripts/check_trace.py ${SYSTOLIC_GRID_INFO} $(SYSTOLIC_NETLIST_INFO) ${SYSTOLIC_IO_PLACE} build/pysim_out/behavioral_trace.csv build/pysim_out/ --acceptance_ratio_history build/pysim_out/acceptance_ratio_history.txt
