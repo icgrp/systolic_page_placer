@@ -26,7 +26,8 @@
 - Install `pyserial` if you want to interface with a physical implimentation of our systolic placer
 
 ## Quickstart (Simulation Only)
-- In our repository, run `make synth` to synthesize a blif file from the default Verilog benchmark
+- In our repository, run `make clean` to ensure a valid beginning state
+- Run `make synth` to synthesize a blif file from the default Verilog benchmark
 - Run `make init` to create metadata about the systolic accelerator, as well as produce benchmark specific files to be processed by the accelerator
 - Run `make pysim` to run a Python behavioral simulation of the systolic placer and to validate its trace
 - Run `make rtl` to generate the RTL for the systolic placer and the testbench
@@ -43,7 +44,8 @@
 - In this repository, run `xsct` in the terminal
 - At the xsct prompt, run `source versal_implementation/connect.tcl`. This will configure the Versal
 - At the xsct prompt, run `exit`
-- In our repository, run `make synth` to synthesize a blif file from the default Verilog benchmark
+- In our repository, run `make clean` to ensure a valid beginning state
+- Run `make synth` to synthesize a blif file from the default Verilog benchmark
 - Run `make init` to create metadata about the systolic accelerator, as well as produce benchmark specific files to be processed by the accelerator
 - Run `make rtl` to generate the RTL for the systolic placer and the testbench
 - Run `make bit` to generate the benchmark netlist bitstream for our accelerator
