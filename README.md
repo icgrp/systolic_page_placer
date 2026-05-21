@@ -1,4 +1,5 @@
 # systolic_page_placer
+Code repository for the FPGA '26 paper [Hardware Accelerated FPGA Divide-and-Conquer Page Placement in Milliseconds](https://dl.acm.org/doi/10.1145/3748173.3779190)
 
 ## Requirements
 - [Verilog to Routing](https://github.com/verilog-to-routing/vtr-verilog-to-routing)
