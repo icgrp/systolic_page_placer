@@ -133,9 +133,11 @@ module {name}(input wire clk,
 
     reg weight_mode;
 
-    reg [$clog2(SCD+(H_t-1)+2*N+1)-1:0]     sum_cycle_counter;
+    reg [$clog2(V*B_t+1)-1:0]               weighted_coord;
+
+    reg [$clog2(SCD+WSRD+(2*N)+1)-1:0]      sum_cycle_counter;
     reg [$clog2(SCD+(H_t-1)+N+1)-1:0]       sample_x_sum_cycle;
-    reg [$clog2(SCD+(H_t-1)+2*N+1)-1:0]     sample_y_sum_cycle;
+    reg [$clog2(SCD+(H_t-1)+(2*N)+1)-1:0]   sample_y_sum_cycle;
     //********************************************************
     // LFSR Registers
     reg [15:0] lfsr;
@@ -247,7 +249,7 @@ module {name}(input wire clk,
     //********************************************************
     // Summing logic
 
-    wire [$clog2(V*B_t+1)-1:0] weighted_coord = in_weight*sum_coord;
+    wire [$clog2(V*B_t+1)-1:0] weighted_coord_comp = in_weight*sum_coord;
     wire [$clog2(B_t+1)-1:0] sum_coord = (weight_mode == 0) ? temp_coord[2*$clog2(B_t+1)-1:$clog2(B_t+1)] : temp_coord[$clog2(B_t+1)-1:0];
 
     wire [$clog2(SCD+1)-1:0] scd = SCD;
@@ -260,6 +262,15 @@ module {name}(input wire clk,
     // Debugging logic
 
     wire debug_sample = (sum_cycle_counter == sample_x_sum_cycle) | (sum_cycle_counter == sample_y_sum_cycle);
+
+    //#########################################################################################################################
+    // Pipelining 
+    //#########################################################################################################################
+
+    // DSP pipeligning
+    always @(posedge clk) begin
+        weighted_coord <= weighted_coord_comp;
+    end
 
     //#########################################################################################################################
     // STATE MACHINE
@@ -302,6 +313,7 @@ module {name}(input wire clk,
     // config params
     parameter integer START_DELAY = -1;
     parameter integer LOAD_DELAY = -1;
+    parameter integer SUM_DELAY = -1; 
     localparam UNLOAD_DELAY = N;
     localparam RAM_DEPTH = N;
 
@@ -760,10 +772,10 @@ module {name}(input wire clk,
             end
             //********************************************************
             // Control
-            if(sum_cycle_counter == RAM_CYCLES + MULT_CYCLES + (MSAD - ($clog2(W_t) + H_t)) + PE_Y + N - 1) begin
+            if(sum_cycle_counter == SUM_DELAY + RAM_CYCLES + N - 1) begin
                 weight_mode <= 1;
             end
-            else if(sum_cycle_counter == (SCD + WSRD + 2*N) && update_count != num_of_updates) begin
+            else if(sum_cycle_counter == (SCD + WSRD + 2*N - 1)) begin
                 state <= STATE_SWAP_0;
                 phase <= saved_phase;
                 enable_weights <= 0;

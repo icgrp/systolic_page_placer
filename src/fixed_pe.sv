@@ -55,7 +55,7 @@ module fixed_pe(input wire clk,
     reg [$clog2(N+1)-1:0] load_counter;
     reg [$clog2(B+1)-1:0] start_delay_counter;
     reg [$clog2(SORT_CYCLES+1)-1:0] sort_counter;
-    reg [$clog2(SCD+WSRD+2*N+1)-1:0] sum_cycle_counter;
+    reg [$clog2(SCD+WSRD+(2*N)+1)-1:0] sum_cycle_counter;
     reg [$clog2(MAX_SWAPS_PER_UPDATE*CYCLES_PER_SWAP+1)-1:0] swap_cycle_counter;
     reg [$clog2(MAX_SWAPS_PER_UPDATE*CYCLES_PER_SWAP+1)-1:0] swap_cycle_counter_target;
     reg [$clog2(MAX_NUM_OF_UPDATES+1)-1:0] swap_set_counter;
@@ -190,10 +190,10 @@ module fixed_pe(input wire clk,
             out <= in + in_fixed_sum_of_coord;
             //****************************************************
             // Control 
-            if(sum_cycle_counter == SCD - FIXED_SUM_CYCLES + N - 1) begin
+            if(sum_cycle_counter == ((SCD - FIXED_SUM_CYCLES) + N - 1)) begin
                 sum_mode <= 1;
             end
-            if(sum_cycle_counter == (SCD - FIXED_SUM_CYCLES + WSRD + 2*N + 1)) begin
+            if(sum_cycle_counter == (SCD + WSRD + 2*N - 1)) begin
                 state <= STATE_WAIT_SWAP;
                 swap_set_counter <= swap_set_counter + 1;
                 swap_cycle_counter <= 0;

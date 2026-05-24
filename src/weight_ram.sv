@@ -10,7 +10,7 @@ module weight_ram (input wire clk,
     parameter integer N = -1;
     parameter integer DELAY_CYCLES = -1;
     
-    reg [$clog2(DELAY_CYCLES + 1)-1:0] counter = 0;
+    reg [$clog2(DELAY_CYCLES + 2)-1:0] counter = 0;
     reg [$clog2(N)-1:0] address = 0;
 
     reg [DATA_WIDTH-1:0] weights[0:N-1];

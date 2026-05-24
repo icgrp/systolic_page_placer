@@ -88,6 +88,7 @@ defparam pe_x{pe_x}_y{pe_y}.LOAD_PHASE = {load_phase};
 defparam pe_x{pe_x}_y{pe_y}.UNLOAD_PHASE = {unload_phase};
 defparam pe_x{pe_x}_y{pe_y}.LOAD_DELAY = {load_delay};
 defparam pe_x{pe_x}_y{pe_y}.START_DELAY = {start_delay};
+defparam pe_x{pe_x}_y{pe_y}.SUM_DELAY = MSAD - ($clog2(W_t) + H_t) + {pe_y};
 
 // weight ram
 weight_ram weight_ram_x{pe_x}_y{pe_y}(

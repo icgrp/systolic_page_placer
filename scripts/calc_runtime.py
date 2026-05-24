@@ -5,15 +5,11 @@ import numpy as np
 ################################################################################################
 def compute_runtime(placer_params,num_of_updates,swaps_per_update,frequency):
 
-    FIXED_SUM_CYCLES = 1
-
     placer_params, sub_placer_params_dict = pp.read_params_from_file(placer_params)
 
     cycles_per_swap = 10
     cycles_per_sort = 4*placer_params.D*np.ceil(np.log2(placer_params.D)) + 2*placer_params.D
-    cycles_per_sum = placer_params.SCD - FIXED_SUM_CYCLES + placer_params.WSRD + 2*placer_params.N
-
-
+    cycles_per_sum = placer_params.SCD + placer_params.WSRD + 2*placer_params.N
 
     runtime_cycles = (swaps_per_update*num_of_updates)*cycles_per_swap + num_of_updates*(cycles_per_sort + cycles_per_sum)
     runtime = runtime_cycles*(1/frequency)

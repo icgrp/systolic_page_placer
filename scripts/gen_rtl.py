@@ -642,8 +642,7 @@ def create_placer(systolic_grid_info_file,
         WSRD = H_m - 1
 
         # Compute SCD
-        SCD = RAM_CYCLES + MULT_CYCLES + MSAD + max(1,math.ceil(math.log2(T))) + FIXED_SUM_CYCLES
-
+        SCD = RAM_CYCLES + MULT_CYCLES + MSAD + max(1,math.ceil(math.log2(T))) + FIXED_SUM_CYCLES             
         # Compute the bus width
         # Note: 16 is a lower bound because of how the loading circuit was implimented
         BUS_WIDTH = max(math.ceil(math.log2(2*P + K*R_m + 1)) + 1, 16)
@@ -858,7 +857,7 @@ def main():
     p.add_argument("--n_io", help="number of io", default=100)
     p.add_argument("--f_io", help="io fanin", default=1)
     p.add_argument("--ram_cycles", help="ram cycles", default=1)
-    p.add_argument("--mult_cycles", help="mult cycles", default=0)
+    p.add_argument("--mult_cycles", help="mult cycles", default=1)
     p.add_argument("--fixed_sum_cycles", help="fixed sum cycles", default=1)
     args = p.parse_args()
 
