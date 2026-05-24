@@ -251,8 +251,6 @@ module {name}(input wire clk,
 
     wire [$clog2(V*B_t+1)-1:0] weighted_coord_comp = in_weight*sum_coord;
     wire [$clog2(B_t+1)-1:0] sum_coord = (weight_mode == 0) ? temp_coord[2*$clog2(B_t+1)-1:$clog2(B_t+1)] : temp_coord[$clog2(B_t+1)-1:0];
-
-    wire [$clog2(SCD+1)-1:0] scd = SCD;
     //********************************************************
     // LFSR logic
 
@@ -267,7 +265,7 @@ module {name}(input wire clk,
     // Pipelining 
     //#########################################################################################################################
 
-    // DSP pipeligning
+    // DSP pipelining
     always @(posedge clk) begin
         weighted_coord <= weighted_coord_comp;
     end
@@ -623,7 +621,7 @@ module {name}(input wire clk,
             else begin                                                 // otherwise continue in swapping mode
                 phase <= phase + 1;                                    // Note: this may overflow to zero, and this is intended
                 swap_count <= swap_count + 1;
-                state <= 0;
+                state <= STATE_SWAP_0;
             end
 
             // create the next random number and decrement the counter
