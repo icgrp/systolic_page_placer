@@ -127,7 +127,6 @@ module {name}(input wire clk,
     reg [$clog2($clog2(D+1)+1)-1:0]     sort_itter_counter;
     reg [$clog2(N_t-1+1)-1:0]           temp_blk_id;
     reg [2*$clog2(B_t+1)-1:0]           temp_coord;
-    reg                                 sort_final_row;
     //********************************************************
     // Summing Registers
 
@@ -246,6 +245,11 @@ module {name}(input wire clk,
     // Sorting logic
 
     wire sort_condition = ((sort_master && (active_in < temp_blk_id)) || (!sort_master && !(active_in < temp_blk_id)));
+
+    wire sort_x_should_swap = ((((odd_row == 0) && sort_condition) || ((odd_row != 0) && !sort_condition)) && !illegal_move);
+    wire sort_y_should_swap = (sort_condition && !illegal_move);
+    wire sort_pass_done = (sort_swap_counter == (D - 1));
+    wire sort_iter_done = (sort_itter_counter == ($clog2(D) - 1));
     //********************************************************
     // Summing logic
 
@@ -285,10 +289,12 @@ module {name}(input wire clk,
     localparam STATE_LOAD_4 = 21;
 
     // sort
-    localparam STATE_SORT_0 = 10;
-    localparam STATE_SORT_1 = 11;
-    localparam STATE_SORT_2 = 12;
-    localparam STATE_SORT_3 = 13;
+    localparam STATE_SORT_X_COMPARE        = 10;
+    localparam STATE_SORT_X_EXCHANGE       = 11;
+    localparam STATE_SORT_Y_COMPARE        = 12;
+    localparam STATE_SORT_Y_EXCHANGE       = 13;
+    localparam STATE_SORT_FINAL_X_COMPARE  = 22;
+    localparam STATE_SORT_FINAL_X_EXCHANGE = 23;
 
     // swap
     localparam STATE_SWAP_0 = 0;
@@ -342,7 +348,6 @@ module {name}(input wire clk,
 
             sort_swap_counter <= 0;
             sort_itter_counter <= 0;
-            sort_final_row <= 0;
 
             weight_mode <= 0;
             sample_x_sum_cycle <= 0;
@@ -462,11 +467,7 @@ module {name}(input wire clk,
 
                 phase <= 0;
                 temp_blk_id <= blk_id;
-                state <= STATE_SORT_0;
-
-                // state <= STATE_UNLOAD_0;
-                // phase <= UNLOAD_PHASE;
-                // complete <= 1;
+                state <= STATE_SORT_X_COMPARE;
             end
             else begin
                 load_counter <= load_counter + 1;
@@ -609,7 +610,7 @@ module {name}(input wire clk,
             end
             else if(swap_count == (swaps_per_update - 1)) begin        // if done swapping mode, move to sorting mode
                 swap_count <= 0;
-                state <= STATE_SORT_0;
+                state <= STATE_SORT_X_COMPARE;
                 phase <= 0;
                 saved_phase <= phase + 1;                              // this is the phase we will start off with after we are done sorting and summing
                 temp_blk_id <= blk_id;
@@ -644,15 +645,16 @@ module {name}(input wire clk,
         end
         //********************************************************
         // Sorting
-        STATE_SORT_0: begin
-            // sort part 1
+        STATE_SORT_X_COMPARE: begin
+            // X compare: decide whether to exchange temp_blk_id/temp_coord
+            // with the horizontal neighbor selected by phase 0 or 2.
 
             // when we enter this state, we assume that
             // the PEs are transmitting their temp_blk_ids,
             // (or their blk_ids if its the first time)
 
             // So active in has the neighbor's block id
-            if((((odd_row == 0) && sort_condition) || ((odd_row != 0) && !sort_condition)) && !illegal_move) begin
+            if(sort_x_should_swap) begin
                 swap <= 1;
                 temp_blk_id <= active_in;
             end
@@ -662,53 +664,37 @@ module {name}(input wire clk,
             out_up <= temp_coord;
             out_down <= temp_coord;
 
-            state <= STATE_SORT_1;
+            state <= STATE_SORT_X_EXCHANGE;
         end
-        STATE_SORT_1: begin
-            // sort part 2
+        STATE_SORT_X_EXCHANGE: begin
+            // X exchange/control: receive temp_coord if the previous compare
+            // selected a swap, then either continue X passes or move to Y passes.
             if(swap) begin
                 temp_coord <= active_in;
                 swap <= 0;
             end
 
-            if(sort_swap_counter == (D - 1)) begin
+            if(sort_pass_done) begin
                 sort_swap_counter <= 0;
 
-                if(~sort_final_row) begin
-                    phase <= 3;
-                    state <= STATE_SORT_2;
-                end
-                else begin
-                    phase <= 0;
-                    state <= STATE_SUM_0;
-
-                    sample_x_sum_cycle <= BLK_ID_OFFSET + blk_id + (SCD + SRD);
-                    sample_y_sum_cycle <= BLK_ID_OFFSET + blk_id + (SCD + SRD + N);
-
-                    sum_cycle_counter <= 0;
-                    sort_final_row <= 0;
-
-                    enable_weights <= 1;
-
-                    debug_sorting <= 0;
-                    debug_summing <= 1;
-                end
+                phase <= 3;
+                state <= STATE_SORT_Y_COMPARE;
             end
             else begin
                 sort_swap_counter <= sort_swap_counter + 1;
                 phase <= (phase == 0) ? 2 : 0;
-                state <= STATE_SORT_0;
+                state <= STATE_SORT_X_COMPARE;
             end
 
             out_right <= temp_blk_id;
             out_left <= temp_blk_id;
             out_up <= temp_blk_id;
             out_down <= temp_blk_id;
-
         end
-        STATE_SORT_2: begin
-            // sort part 3
-            if(sort_condition && !illegal_move) begin
+        STATE_SORT_Y_COMPARE: begin
+            // Y compare: decide whether to exchange temp_blk_id/temp_coord
+            // with the vertical neighbor selected by phase 3 or 1.
+            if(sort_y_should_swap) begin
                 swap <= 1;
                 temp_blk_id <= active_in;
             end
@@ -718,38 +704,88 @@ module {name}(input wire clk,
             out_up <= temp_coord;
             out_down <= temp_coord;
 
-            state <= STATE_SORT_3;
-
+            state <= STATE_SORT_Y_EXCHANGE;
         end
-        STATE_SORT_3: begin
-            // sort part 4
+        STATE_SORT_Y_EXCHANGE: begin
+            // Y exchange/control: receive temp_coord if needed. A completed
+            // Y pass either starts another X/Y iteration or moves to the final
+            // X pass before summing.
             if(swap) begin
                 temp_coord <= active_in;
                 swap <= 0;
             end
-            if(sort_swap_counter == D - 1) begin
-                if(sort_itter_counter == $clog2(D) - 1) begin
+
+            if(sort_pass_done) begin
+                if(sort_iter_done) begin
                     sort_itter_counter <= 0;
-                    sort_final_row <= 1;
+                    state <= STATE_SORT_FINAL_X_COMPARE;
                 end
                 else begin
                     sort_itter_counter <= sort_itter_counter + 1;
+                    state <= STATE_SORT_X_COMPARE;
                 end
+
                 sort_swap_counter <= 0;
-                state <= STATE_SORT_0;
                 phase <= 0;
             end
             else begin
                 sort_swap_counter <= sort_swap_counter + 1;
                 phase <= (phase == 3) ? 1 : 3;
-                state <= STATE_SORT_2;
+                state <= STATE_SORT_Y_COMPARE;
             end
 
             out_right <= temp_blk_id;
             out_left <= temp_blk_id;
             out_up <= temp_blk_id;
             out_down <= temp_blk_id;
+        end
+        STATE_SORT_FINAL_X_COMPARE: begin
+            // Final X compare: same compare/exchange operation as a normal X
+            // pass, but completion transitions directly into summing.
+            if(sort_x_should_swap) begin
+                swap <= 1;
+                temp_blk_id <= active_in;
+            end
 
+            out_right <= temp_coord;
+            out_left <= temp_coord;
+            out_up <= temp_coord;
+            out_down <= temp_coord;
+
+            state <= STATE_SORT_FINAL_X_EXCHANGE;
+        end
+        STATE_SORT_FINAL_X_EXCHANGE: begin
+            // Final X exchange/control: finish the final row pass and start
+            // the sum phase once all D compare/exchange pairs have run.
+            if(swap) begin
+                temp_coord <= active_in;
+                swap <= 0;
+            end
+
+            if(sort_pass_done) begin
+                sort_swap_counter <= 0;
+                phase <= 0;
+                state <= STATE_SUM_0;
+
+                sample_x_sum_cycle <= BLK_ID_OFFSET + blk_id + (SCD + SRD);
+                sample_y_sum_cycle <= BLK_ID_OFFSET + blk_id + (SCD + SRD + N);
+
+                sum_cycle_counter <= 0;
+                enable_weights <= 1;
+
+                debug_sorting <= 0;
+                debug_summing <= 1;
+            end
+            else begin
+                sort_swap_counter <= sort_swap_counter + 1;
+                phase <= (phase == 0) ? 2 : 0;
+                state <= STATE_SORT_FINAL_X_COMPARE;
+            end
+
+            out_right <= temp_blk_id;
+            out_left <= temp_blk_id;
+            out_up <= temp_blk_id;
+            out_down <= temp_blk_id;
         end
         //********************************************************
         // Sum computation
