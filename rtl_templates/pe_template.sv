@@ -5,20 +5,20 @@ module {name}(input wire clk,
           output reg complete = 0,
 
           input wire [BUS_WIDTH-1:0] in_right,
-          output reg [BUS_WIDTH-1:0] out_right,
+          output wire [BUS_WIDTH-1:0] out_right,
           output reg out_hot_move_right = 0,
 
           input wire [BUS_WIDTH-1:0] in_left,
           input wire in_hot_move_left,
-          output reg [BUS_WIDTH-1:0] out_left,
+          output wire [BUS_WIDTH-1:0] out_left,
 
           input wire [BUS_WIDTH-1:0] in_up,
-          output reg [BUS_WIDTH-1:0] out_up,
+          output wire [BUS_WIDTH-1:0] out_up,
           output reg out_hot_move_up = 0,
 
           input wire [BUS_WIDTH-1:0] in_down,
           input wire in_hot_move_down,
-          output reg [BUS_WIDTH-1:0] out_down,
+          output wire [BUS_WIDTH-1:0] out_down,
 
           output reg enable_weights = 0,
           output reg enable_load_weights = 0,
@@ -89,7 +89,10 @@ module {name}(input wire clk,
     //#########################################################################################################################
     // REGISTERS
     //#########################################################################################################################
-    
+
+    //********************************************************
+    // Bus muxing register
+    reg [BUS_WIDTH-1:0] broadcast;
     //********************************************************
     // General Registers
 
@@ -137,6 +140,9 @@ module {name}(input wire clk,
     reg [$clog2(SCD+WSRD+(2*N)+1)-1:0]      sum_cycle_counter;
     reg [$clog2(SCD+(H_t-1)+N+1)-1:0]       sample_x_sum_cycle;
     reg [$clog2(SCD+(H_t-1)+(2*N)+1)-1:0]   sample_y_sum_cycle;
+
+    reg [BUS_WIDTH-1:0] partial_update_sum;
+    reg [BUS_WIDTH-1:0] completed_update_sum;
     //********************************************************
     // LFSR Registers
     reg [15:0] lfsr;
@@ -163,6 +169,12 @@ module {name}(input wire clk,
     // LOGIC
     //#########################################################################################################################
 
+    //********************************************************
+    // Bus muxing logic
+    assign out_right = broadcast;
+    assign out_left = broadcast;
+    assign out_up = (state != STATE_SUM_0) ? broadcast : partial_update_sum;
+    assign out_down = (state != STATE_SUM_0) ? broadcast : completed_update_sum;
     //********************************************************
     // General logic
 
@@ -431,10 +443,8 @@ module {name}(input wire clk,
                 end
             end
 
-            out_right <= active_in;
-            out_left <= active_in;
-            out_up <= active_in;
-            out_down <= active_in;
+            broadcast <= active_in;
+
         end
         STATE_LOAD_3: begin // 20 (init k_x and k_y)
             load_enable_out <= 0;
@@ -455,11 +465,6 @@ module {name}(input wire clk,
         STATE_LOAD_4: begin // 21 (sync delay before start)
             if(load_counter == START_DELAY - 1) begin
 
-                out_right <= blk_id;
-                out_left <= blk_id;
-                out_up <= blk_id;
-                out_down <= blk_id;
-
                 load_counter <= 0;
 
                 debug_loading <= 0;
@@ -472,6 +477,7 @@ module {name}(input wire clk,
             else begin
                 load_counter <= load_counter + 1;
             end
+            broadcast <= blk_id;
         end
         //********************************************************
         // Swapping
@@ -495,10 +501,7 @@ module {name}(input wire clk,
 
             // This is overkill but requiers less logic,
             // and shouldn't cause any trouble
-            out_right <= half_s_comp;
-            out_left <= half_s_comp;
-            out_up <= half_s_comp;
-            out_down <= half_s_comp;
+            broadcast <= half_s_comp;
 
             state <= STATE_SWAP_3;
         end
@@ -507,10 +510,7 @@ module {name}(input wire clk,
             full_s <= full_s_comp;
 
             // need to output this stuff if we swap
-            out_right <= blk_id;
-            out_left <= blk_id;
-            out_up <= blk_id;
-            out_down <= blk_id;
+            broadcast <= blk_id;
 
             state <= STATE_SWAP_4;
         end
@@ -528,10 +528,7 @@ module {name}(input wire clk,
                 end
             end
 
-            out_right <= k;
-            out_left <= k;
-            out_up <= k;
-            out_down <= k;
+            broadcast <= k;
 
             state <= STATE_SWAP_5;
         end
@@ -541,10 +538,7 @@ module {name}(input wire clk,
                 k <= active_in;
             end
 
-            out_right <= k_x;
-            out_left <= k_x;
-            out_up <= k_x;
-            out_down <= k_x;
+            broadcast <= k_x;
 
             state <= STATE_SWAP_6;
         end
@@ -554,10 +548,7 @@ module {name}(input wire clk,
                 k_x <= active_in;
             end
 
-            out_right <= k_y;
-            out_left <= k_y;
-            out_up <= k_y;
-            out_down <= k_y;
+            broadcast <= k_y;
 
             state <= STATE_SWAP_7;
         end
@@ -567,10 +558,7 @@ module {name}(input wire clk,
                 k_y <= active_in;
             end
 
-            out_right <= sum_px;
-            out_left <= sum_px;
-            out_up <= sum_px;
-            out_down <= sum_px;
+            broadcast <= sum_px;
 
             state <= STATE_SWAP_8;
         end
@@ -580,10 +568,7 @@ module {name}(input wire clk,
                 sum_px <= active_in;
             end
 
-            out_right <= sum_py;
-            out_left <= sum_py;
-            out_up <= sum_py;
-            out_down <= sum_py;
+            broadcast <= sum_py;
 
             state <= STATE_SWAP_9;
         end
@@ -599,11 +584,6 @@ module {name}(input wire clk,
                 sum_cycle_counter <= 0;
                 load_counter <= 0;
                 complete <= 1;
-
-                out_right <= blk_id;
-                out_left <= blk_id;
-                out_up <= blk_id;
-                out_down <= blk_id;
 
                 debug_swapping <= 0;
                 debug_halt <= 1;
@@ -637,11 +617,8 @@ module {name}(input wire clk,
             // completed the swap (assuming one was taking place)
             swap <= 0;
 
-            // Needed if we go into sorting mode
-            out_right <= blk_id;
-            out_left <= blk_id;
-            out_up <= blk_id;
-            out_down <= blk_id;
+            // Needed if we go into sorting mode or unload
+            broadcast <= blk_id;
         end
         //********************************************************
         // Sorting
@@ -659,10 +636,7 @@ module {name}(input wire clk,
                 temp_blk_id <= active_in;
             end
 
-            out_right <= temp_coord;
-            out_left <= temp_coord;
-            out_up <= temp_coord;
-            out_down <= temp_coord;
+            broadcast <= temp_coord;
 
             state <= STATE_SORT_X_EXCHANGE;
         end
@@ -686,10 +660,7 @@ module {name}(input wire clk,
                 state <= STATE_SORT_X_COMPARE;
             end
 
-            out_right <= temp_blk_id;
-            out_left <= temp_blk_id;
-            out_up <= temp_blk_id;
-            out_down <= temp_blk_id;
+            broadcast <= temp_blk_id;
         end
         STATE_SORT_Y_COMPARE: begin
             // Y compare: decide whether to exchange temp_blk_id/temp_coord
@@ -699,10 +670,7 @@ module {name}(input wire clk,
                 temp_blk_id <= active_in;
             end
 
-            out_right <= temp_coord;
-            out_left <= temp_coord;
-            out_up <= temp_coord;
-            out_down <= temp_coord;
+            broadcast <= temp_coord;
 
             state <= STATE_SORT_Y_EXCHANGE;
         end
@@ -734,10 +702,7 @@ module {name}(input wire clk,
                 state <= STATE_SORT_Y_COMPARE;
             end
 
-            out_right <= temp_blk_id;
-            out_left <= temp_blk_id;
-            out_up <= temp_blk_id;
-            out_down <= temp_blk_id;
+            broadcast <= temp_blk_id;
         end
         STATE_SORT_FINAL_X_COMPARE: begin
             // Final X compare: same compare/exchange operation as a normal X
@@ -747,10 +712,7 @@ module {name}(input wire clk,
                 temp_blk_id <= active_in;
             end
 
-            out_right <= temp_coord;
-            out_left <= temp_coord;
-            out_up <= temp_coord;
-            out_down <= temp_coord;
+            broadcast <= temp_coord;
 
             state <= STATE_SORT_FINAL_X_EXCHANGE;
         end
@@ -782,20 +744,17 @@ module {name}(input wire clk,
                 state <= STATE_SORT_FINAL_X_COMPARE;
             end
 
-            out_right <= temp_blk_id;
-            out_left <= temp_blk_id;
-            out_up <= temp_blk_id;
-            out_down <= temp_blk_id;
+            broadcast <= temp_blk_id;
         end
         //********************************************************
         // Sum computation
         STATE_SUM_0: begin
             //********************************************************
             // Compute partial sums
-            out_up <= in_down + weighted_coord;
+            partial_update_sum <= in_down + weighted_coord;
             //********************************************************
             // Forward the completed sums
-            out_down <= in_up;
+            completed_update_sum <= in_up;
             //********************************************************
             // Capture completed sums
             if(sum_cycle_counter == sample_x_sum_cycle) begin
@@ -826,10 +785,7 @@ module {name}(input wire clk,
         // Unload
         STATE_UNLOAD_0: begin
 
-            out_right <= active_in;
-            out_left <= active_in;
-            out_up <= active_in;
-            out_down <= active_in;
+            broadcast <= active_in;
 
             if(load_counter == UNLOAD_DELAY - 1) begin
                 debug_halt <= 0;
