@@ -69,7 +69,7 @@ Impementation is performed with Vivado and Vitis 2021.2 on a Versal VCK-190 ES-1
 - Create a new Vivado project in the `versal_implementation/` dir for the Versal VCK-190 board
 - Add the directory build/rtl_export to the project's sources
 - Remove rtl_export/generated_rtl/tb.sv
-- In the TcL Console, run `source ../design_1.tcl`
+- In the TcL Console, run `source ../design_1.tcl` (if this fails, try passing the full path to the script)
 - Then export the HDL wraper for the the block design, and set it to be the top module.
 - Then start to run synthisis. Halt synthisis, and under the `Design Runs` tab, select the `Flow_AreaOptimized_high` synthesis strategy for all of the out of context runs.
 - Then restart synthisis.
