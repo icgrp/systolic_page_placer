@@ -1,6 +1,9 @@
 # systolic_page_placer
 Code repository for the FPGA '26 paper [Hardware Accelerated FPGA Divide-and-Conquer Page Placement in Milliseconds](https://dl.acm.org/doi/10.1145/3748173.3779190)
 
+## for_dj
+At the top of the `Makefile` there are 3 parameters for you to touch: `WIDTH`, `HEIGHT`, and `N_IO`. These set the width and height of the array, and number of IO that can be placed. Note, this last parameter doesn't add PEs to the design, it just controls the sizes of registers/busses. I would not bother to sweep this in your experiments. To generate a systolic array for a monolithic target composed of CLBs, run: `make dj_array`. The rtl will be in `build/rtl_export`. You should set the top module to be `build/rtl_export/common/placer_interface_wrapper.v`. There is also a testbench file which you might want to get rid of, since it won't really do anything in this custom flow I made for you: `build/rtl_export/generated_rtl/tb.sv`. Finally, I think you may have errors if you use an earlier version of Python. I'm using Python 3.10.12 (3.10 should do it).
+
 ## Requirements
 - [Verilog to Routing](https://github.com/verilog-to-routing/vtr-verilog-to-routing)
 - [Icarus Verilog](https://github.com/steveicarus/iverilog)
