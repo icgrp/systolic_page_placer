@@ -9,12 +9,12 @@ BENCHMARK_BLIF=$(CURDIR)/build/synth/$(BENCHMARK_NAME).blif
 WIDTH=35
 HEIGHT=35
 N_IO=800
-UPDATES=3
+UPDATES=2
 SWAPS_PER_UPDATE=5
 INITIAL_TEMP=65533
 
 # Don't touch
-SYSTOLIC_ARCH_TEMPLATE=vtr_integration/arch/heterogeneous_k10.xml
+SYSTOLIC_ARCH_TEMPLATE=vtr_integration/arch/homogeneous_k10.xml
 SYSTOLIC_GRID_INFO=build/pnr/systolic_grid_info
 SYSTOLIC_ARCH_INFO=build/pnr/systolic_arch_info
 SYSTOLIC_NETLIST_INFO=build/pnr/systolic_netlist_info
