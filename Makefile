@@ -1,3 +1,14 @@
+##########################################################
+# Params for DJ
+WIDTH=35
+HEIGHT=35
+N_IO=800
+
+# Don't touch
+DJ_SYSTOLIC_GRID_INFO=build/systolic_info/systolic_grid_info
+DJ_SYSTOLIC_ARCH_INFO=build/systolic_info/systolic_arch_info
+##########################################################
+
 # Benchmark
 BENCHMARK_VERILOG=benchmarks/arm_core.v
 
@@ -6,9 +17,9 @@ BENCHMARK_NAME=$(basename $(notdir $(BENCHMARK_VERILOG)))
 BENCHMARK_BLIF=$(CURDIR)/build/synth/$(BENCHMARK_NAME).blif
 
 # Placer parameters
-WIDTH=35
-HEIGHT=35
-N_IO=800
+# WIDTH=35
+# HEIGHT=35
+# N_IO=800
 UPDATES=2
 SWAPS_PER_UPDATE=5
 INITIAL_TEMP=65533
@@ -42,6 +53,18 @@ init:
 	@python3 scripts/gen_io_placement.py build/pnr/*.place ${SYSTOLIC_NETLIST_INFO} ${SYSTOLIC_IO_PLACE}
 	@python3 scripts/gen_netlist_hist.py ${SYSTOLIC_NETLIST_INFO} build/netlist_histograms
 	@python3 scripts/gen_placer_init.py ${SYSTOLIC_GRID_INFO} ${PLACER_INIT}
+#######################################################################################################################################################################################################
+dj_array:
+	@mkdir -p build/systolic_info/
+	@python3 scripts/gen_dj_array.py $(WIDTH) $(HEIGHT) $(DJ_SYSTOLIC_GRID_INFO)
+	@echo "type	fanin\nEMPTY	0\nio	16\nclb	41" > $(DJ_SYSTOLIC_ARCH_INFO)
+	@mkdir -p build/generated_rtl
+	@mkdir -p build/rtl_export
+	@python3 scripts/gen_rtl.py ${DJ_SYSTOLIC_GRID_INFO} ${DJ_SYSTOLIC_ARCH_INFO} -o build/generated_rtl --n_io ${N_IO}
+	@cp -r build/generated_rtl/ build/rtl_export
+	@mkdir -p build/rtl_export/common
+	@cp -r src/* build/rtl_export/common
+	@rm -rf build/generated_rtl
 #######################################################################################################################################################################################################
 rtl:
 	@mkdir -p build/generated_rtl
@@ -141,7 +164,7 @@ vtr:
 	--route \
 	--route_chan_width ${ROUTE_CHAN_WIDTH})
 
-# clean:
-# 	@rm -rf build/
+clean:
+	@rm -rf build/
 
 .PHONY: init rtl bit rtlsim pysim diff physical route_pysim route_rtlsim vtr clean
