@@ -44,7 +44,7 @@ module {name}(input wire clk,
     parameter integer MSAD = -1;                // Maximum Sub-Array Depth
     parameter integer WSRD = -1;                // worst sum return depth, the number of cycles for a newly computed sum to arrive at the input of the farthest PE across all sub-arrays.    
     parameter integer RAM_CYCLES = -1;          // should be set to 1
-    parameter integer MULT_CYCLES = -1;         // should be set to 0 for now
+    parameter integer MULT_CYCLES = -1;         // should be set to 1
     parameter integer FIXED_SUM_CYCLES = -1;    // should be set to 1
     parameter integer SCD = -1;
 
@@ -122,6 +122,7 @@ module {name}(input wire clk,
     // signed
     reg signed [$clog2(2*P+1)+1-1:0]                partial;
     reg signed [$clog2(2*P+MAX_K*R_t+1)+1-1:0]      half_s;
+    reg signed [$clog2(2*P+MAX_K*R_t+1)+1-1:0]      other_half_s;
     reg signed [$clog2(2*(2*P+MAX_K*R_t+1))+1-1:0]  full_s;
 
     // flag
@@ -261,7 +262,7 @@ module {name}(input wire clk,
     // signed
     wire signed [$clog2(2*P+1)+1-1:0]                   partial_comp = ($signed(k_times_coord) - $signed(sum_p)) << 1;
     wire signed [$clog2(2*P+MAX_K*R_t+1)+1-1:0]         half_s_comp = (master == 1) ? partial + $signed(k_r_comp) : partial - $signed(k_r_comp); 
-    wire signed [$clog2(2*(2*P+MAX_K*R_t+1))+1-1:0]     full_s_comp = (master == 1) ? half_s - $signed(active_in) : $signed(active_in) - half_s;
+    wire signed [$clog2(2*(2*P+MAX_K*R_t+1))+1-1:0]     full_s_comp = (master == 1) ? half_s - other_half_s : other_half_s - half_s;
     //********************************************************
     // Sorting logic
 
@@ -482,25 +483,26 @@ module {name}(input wire clk,
         //********************************************************
         // Swapping
         STATE_SWAP_0: begin
-            // does nothing at the moment. could be used for pipelining
-            state <= STATE_SWAP_1;
-        end
-        STATE_SWAP_1: begin
             // calculate the partial
             partial <= partial_comp;
 
             // output the hot_move
             out_hot_move <= hot_move;
-
-            state <= STATE_SWAP_2;
+            
+            state <= STATE_SWAP_1;
         end
-        STATE_SWAP_2: begin
+        STATE_SWAP_1: begin
             // calculate this PE's half of s(x) and output it
             half_s <= half_s_comp;
 
             // This is overkill but requiers less logic,
             // and shouldn't cause any trouble
             broadcast <= half_s_comp;
+
+            state <= STATE_SWAP_2;
+        end
+        STATE_SWAP_2: begin
+            other_half_s <= active_in;            
 
             state <= STATE_SWAP_3;
         end
