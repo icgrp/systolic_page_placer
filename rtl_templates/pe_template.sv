@@ -2,11 +2,11 @@ module {name}(input wire clk,
           input wire rst,
           input wire load_enable_in,
           output reg load_enable_out = 0,
-          output reg complete = 0,
+          output wire complete,
 
           input wire [BUS_WIDTH-1:0] in_right,
           output wire [BUS_WIDTH-1:0] out_right,
-          output reg out_hot_move_right = 0,
+          output wire out_hot_move_right,
 
           input wire [BUS_WIDTH-1:0] in_left,
           input wire in_hot_move_left,
@@ -14,7 +14,7 @@ module {name}(input wire clk,
 
           input wire [BUS_WIDTH-1:0] in_up,
           output wire [BUS_WIDTH-1:0] out_up,
-          output reg out_hot_move_up = 0,
+          output wire out_hot_move_up,
 
           input wire [BUS_WIDTH-1:0] in_down,
           input wire in_hot_move_down,
@@ -44,7 +44,7 @@ module {name}(input wire clk,
     parameter integer MSAD = -1;                // Maximum Sub-Array Depth
     parameter integer WSRD = -1;                // worst sum return depth, the number of cycles for a newly computed sum to arrive at the input of the farthest PE across all sub-arrays.    
     parameter integer RAM_CYCLES = -1;          // should be set to 1
-    parameter integer MULT_CYCLES = -1;         // should be set to 0 for now
+    parameter integer MULT_CYCLES = -1;         // should be set to 1
     parameter integer FIXED_SUM_CYCLES = -1;    // should be set to 1
     parameter integer SCD = -1;
 
@@ -105,6 +105,7 @@ module {name}(input wire clk,
     reg [$clog2(N_t-1+1)-1:0]       blk_id;
     reg [$clog2(MAX_K+1)-1:0]       k;
 
+    reg [$clog2(MAX_K*R_t+1)-1:0]   k_r;
     reg [$clog2(MAX_K*B_t+1)-1:0]   k_x;
     reg [$clog2(MAX_K*B_t+1)-1:0]   k_y;
 
@@ -113,12 +114,16 @@ module {name}(input wire clk,
     //********************************************************
     // Swapping Registers
 
+    // Hot move
+    reg                                             out_hot_move;
+
     // unsigned
     reg [$clog2(MAX_SWAPS_PER_UPDATE+1)-1:0]        swap_count;
 
     // signed
     reg signed [$clog2(2*P+1)+1-1:0]                partial;
     reg signed [$clog2(2*P+MAX_K*R_t+1)+1-1:0]      half_s;
+    reg signed [$clog2(2*P+MAX_K*R_t+1)+1-1:0]      other_half_s;
     reg signed [$clog2(2*(2*P+MAX_K*R_t+1))+1-1:0]  full_s;
 
     // flag
@@ -175,6 +180,12 @@ module {name}(input wire clk,
     assign out_left = broadcast;
     assign out_up = (state != STATE_SUM_0) ? broadcast : partial_update_sum;
     assign out_down = (state != STATE_SUM_0) ? broadcast : completed_update_sum;
+    //********************************************************
+    // Hot move
+    assign out_hot_move_right = out_hot_move;
+    assign out_hot_move_up = out_hot_move;
+    //********************************************************
+    assign complete = (state == STATE_UNLOAD_0);
     //********************************************************
     // General logic
 
@@ -238,8 +249,8 @@ module {name}(input wire clk,
         endcase
     end
 
-    wire [$clog2(MAX_K*B_t+1)-1:0] k_x_comp = (master == 1) ? k_x + k_r_comp : k_x - k_r_comp;
-    wire [$clog2(MAX_K*B_t+1)-1:0] k_y_comp = (master == 1) ? k_y + k_r_comp : k_y - k_r_comp;
+    wire [$clog2(MAX_K*B_t+1)-1:0] k_x_comp = (master == 1) ? k_x + k_r : k_x - k_r;
+    wire [$clog2(MAX_K*B_t+1)-1:0] k_y_comp = (master == 1) ? k_y + k_r : k_y - k_r;
     wire [$clog2(MAX_K*B_t+1)-1:0] k_times_coord = (x_phase == 1) ? k_x : k_y;
 
     wire [$clog2(MAX_K*B_t+1)-1:0] sum_p = (x_phase == 1) ? sum_px : sum_py;
@@ -251,8 +262,8 @@ module {name}(input wire clk,
 
     // signed
     wire signed [$clog2(2*P+1)+1-1:0]                   partial_comp = ($signed(k_times_coord) - $signed(sum_p)) << 1;
-    wire signed [$clog2(2*P+MAX_K*R_t+1)+1-1:0]         half_s_comp = (master == 1) ? partial + $signed(k_r_comp) : partial - $signed(k_r_comp); 
-    wire signed [$clog2(2*(2*P+MAX_K*R_t+1))+1-1:0]     full_s_comp = (master == 1) ? half_s - $signed(active_in) : $signed(active_in) - half_s;
+    wire signed [$clog2(2*P+MAX_K*R_t+1)+1-1:0]         half_s_comp = (master == 1) ? partial + $signed(k_r) : partial - $signed(k_r); 
+    wire signed [$clog2(2*(2*P+MAX_K*R_t+1))+1-1:0]     full_s_comp = (master == 1) ? half_s - other_half_s : other_half_s - half_s;
     //********************************************************
     // Sorting logic
 
@@ -339,7 +350,6 @@ module {name}(input wire clk,
         if(rst) begin
             state <= STATE_INIT_0;
             phase <= LOAD_PHASE;
-            complete <= 0;
         end
         else begin
         case(state)
@@ -350,20 +360,12 @@ module {name}(input wire clk,
             swap_count <= 0;
             sum_px <= 0;
             sum_py <= 0;
-            partial <= 0;
-            half_s <= 0;
-            full_s <= 0;
-            swap <= 0;
             enable_weights <= 0;
-            out_hot_move_right <= 0;
-            out_hot_move_up <= 0;
 
             sort_swap_counter <= 0;
             sort_itter_counter <= 0;
 
             weight_mode <= 0;
-            sample_x_sum_cycle <= 0;
-            sample_y_sum_cycle <= 0;
             sum_cycle_counter <= 0;
 
             temp_coord <= {{x,y}};
@@ -482,26 +484,30 @@ module {name}(input wire clk,
         //********************************************************
         // Swapping
         STATE_SWAP_0: begin
-            // does nothing at the moment. could be used for pipelining
-            state <= STATE_SWAP_1;
-        end
-        STATE_SWAP_1: begin
+
+            // register k_r_comp for later use
+            k_r <= k_r_comp;
+
             // calculate the partial
             partial <= partial_comp;
 
             // output the hot_move
-            out_hot_move_right <= hot_move;
-            out_hot_move_up <= hot_move;
-
-            state <= STATE_SWAP_2;
+            out_hot_move <= hot_move;
+            
+            state <= STATE_SWAP_1;
         end
-        STATE_SWAP_2: begin
+        STATE_SWAP_1: begin
             // calculate this PE's half of s(x) and output it
             half_s <= half_s_comp;
 
             // This is overkill but requiers less logic,
             // and shouldn't cause any trouble
             broadcast <= half_s_comp;
+
+            state <= STATE_SWAP_2;
+        end
+        STATE_SWAP_2: begin
+            other_half_s <= active_in;            
 
             state <= STATE_SWAP_3;
         end
@@ -518,7 +524,7 @@ module {name}(input wire clk,
             // if full_s is negitive or we have
             // a hot move, update k_times_coord and start swapping
             if((full_s_msb | active_hot_move) && !illegal_move) begin
-                swap <= 1;
+                swap <= 1;  // this state assumes swap has been already been cleared to 0 (this happens in the sorting phase)
                 blk_id <= active_in;
                 if(x_phase) begin
                     k_x <= k_x_comp;
@@ -583,7 +589,6 @@ module {name}(input wire clk,
                 phase <= UNLOAD_PHASE;
                 sum_cycle_counter <= 0;
                 load_counter <= 0;
-                complete <= 1;
 
                 debug_swapping <= 0;
                 debug_halt <= 1;
@@ -634,6 +639,9 @@ module {name}(input wire clk,
             if(sort_x_should_swap) begin
                 swap <= 1;
                 temp_blk_id <= active_in;
+            end
+            else begin
+                swap <= 0;
             end
 
             broadcast <= temp_coord;
@@ -789,7 +797,6 @@ module {name}(input wire clk,
 
             if(load_counter == UNLOAD_DELAY - 1) begin
                 debug_halt <= 0;
-                complete <= 0;
                 load_counter <= 0;
                 phase <= LOAD_PHASE;
                 state <= STATE_INIT_0;
