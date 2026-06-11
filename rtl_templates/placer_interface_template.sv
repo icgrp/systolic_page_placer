@@ -26,7 +26,7 @@ module placer_interface(input wire clk,
     wire [{BUS_WIDTH}-1:0] unload_out;
     wire complete;
     
-    (* dont_touch = "yes" *) placer placer_inst(.clk(clk),
+    placer placer_inst(.clk(clk),
                        .rst(not_rst),
                        .load_enable_in(load_enable_in),
                        .complete(complete),
