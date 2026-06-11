@@ -105,6 +105,7 @@ module {name}(input wire clk,
     reg [$clog2(N_t-1+1)-1:0]       blk_id;
     reg [$clog2(MAX_K+1)-1:0]       k;
 
+    reg [$clog2(MAX_K*R_t+1)-1:0]   k_r;
     reg [$clog2(MAX_K*B_t+1)-1:0]   k_x;
     reg [$clog2(MAX_K*B_t+1)-1:0]   k_y;
 
@@ -248,8 +249,8 @@ module {name}(input wire clk,
         endcase
     end
 
-    wire [$clog2(MAX_K*B_t+1)-1:0] k_x_comp = (master == 1) ? k_x + k_r_comp : k_x - k_r_comp;
-    wire [$clog2(MAX_K*B_t+1)-1:0] k_y_comp = (master == 1) ? k_y + k_r_comp : k_y - k_r_comp;
+    wire [$clog2(MAX_K*B_t+1)-1:0] k_x_comp = (master == 1) ? k_x + k_r : k_x - k_r;
+    wire [$clog2(MAX_K*B_t+1)-1:0] k_y_comp = (master == 1) ? k_y + k_r : k_y - k_r;
     wire [$clog2(MAX_K*B_t+1)-1:0] k_times_coord = (x_phase == 1) ? k_x : k_y;
 
     wire [$clog2(MAX_K*B_t+1)-1:0] sum_p = (x_phase == 1) ? sum_px : sum_py;
@@ -261,7 +262,7 @@ module {name}(input wire clk,
 
     // signed
     wire signed [$clog2(2*P+1)+1-1:0]                   partial_comp = ($signed(k_times_coord) - $signed(sum_p)) << 1;
-    wire signed [$clog2(2*P+MAX_K*R_t+1)+1-1:0]         half_s_comp = (master == 1) ? partial + $signed(k_r_comp) : partial - $signed(k_r_comp); 
+    wire signed [$clog2(2*P+MAX_K*R_t+1)+1-1:0]         half_s_comp = (master == 1) ? partial + $signed(k_r) : partial - $signed(k_r); 
     wire signed [$clog2(2*(2*P+MAX_K*R_t+1))+1-1:0]     full_s_comp = (master == 1) ? half_s - other_half_s : other_half_s - half_s;
     //********************************************************
     // Sorting logic
@@ -483,6 +484,10 @@ module {name}(input wire clk,
         //********************************************************
         // Swapping
         STATE_SWAP_0: begin
+
+            // register k_r_comp for later use
+            k_r <= k_r_comp;
+
             // calculate the partial
             partial <= partial_comp;
 
