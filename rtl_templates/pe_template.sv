@@ -2,11 +2,11 @@ module {name}(input wire clk,
           input wire rst,
           input wire load_enable_in,
           output reg load_enable_out = 0,
-          output reg complete = 0,
+          output wire complete,
 
           input wire [BUS_WIDTH-1:0] in_right,
           output wire [BUS_WIDTH-1:0] out_right,
-          output reg out_hot_move_right = 0,
+          output wire out_hot_move_right,
 
           input wire [BUS_WIDTH-1:0] in_left,
           input wire in_hot_move_left,
@@ -14,7 +14,7 @@ module {name}(input wire clk,
 
           input wire [BUS_WIDTH-1:0] in_up,
           output wire [BUS_WIDTH-1:0] out_up,
-          output reg out_hot_move_up = 0,
+          output wire out_hot_move_up,
 
           input wire [BUS_WIDTH-1:0] in_down,
           input wire in_hot_move_down,
@@ -113,6 +113,9 @@ module {name}(input wire clk,
     //********************************************************
     // Swapping Registers
 
+    // Hot move
+    reg                                             out_hot_move;
+
     // unsigned
     reg [$clog2(MAX_SWAPS_PER_UPDATE+1)-1:0]        swap_count;
 
@@ -175,6 +178,12 @@ module {name}(input wire clk,
     assign out_left = broadcast;
     assign out_up = (state != STATE_SUM_0) ? broadcast : partial_update_sum;
     assign out_down = (state != STATE_SUM_0) ? broadcast : completed_update_sum;
+    //********************************************************
+    // Hot move
+    assign out_hot_move_right = out_hot_move;
+    assign out_hot_move_up = out_hot_move;
+    //********************************************************
+    assign complete = (state == STATE_UNLOAD_0);
     //********************************************************
     // General logic
 
@@ -339,7 +348,6 @@ module {name}(input wire clk,
         if(rst) begin
             state <= STATE_INIT_0;
             phase <= LOAD_PHASE;
-            complete <= 0;
         end
         else begin
         case(state)
@@ -350,20 +358,12 @@ module {name}(input wire clk,
             swap_count <= 0;
             sum_px <= 0;
             sum_py <= 0;
-            partial <= 0;
-            half_s <= 0;
-            full_s <= 0;
-            swap <= 0;
             enable_weights <= 0;
-            out_hot_move_right <= 0;
-            out_hot_move_up <= 0;
 
             sort_swap_counter <= 0;
             sort_itter_counter <= 0;
 
             weight_mode <= 0;
-            sample_x_sum_cycle <= 0;
-            sample_y_sum_cycle <= 0;
             sum_cycle_counter <= 0;
 
             temp_coord <= {{x,y}};
@@ -490,8 +490,7 @@ module {name}(input wire clk,
             partial <= partial_comp;
 
             // output the hot_move
-            out_hot_move_right <= hot_move;
-            out_hot_move_up <= hot_move;
+            out_hot_move <= hot_move;
 
             state <= STATE_SWAP_2;
         end
@@ -518,7 +517,7 @@ module {name}(input wire clk,
             // if full_s is negitive or we have
             // a hot move, update k_times_coord and start swapping
             if((full_s_msb | active_hot_move) && !illegal_move) begin
-                swap <= 1;
+                swap <= 1;  // this state assumes swap has been already been cleared to 0 (this happens in the sorting phase)
                 blk_id <= active_in;
                 if(x_phase) begin
                     k_x <= k_x_comp;
@@ -583,7 +582,6 @@ module {name}(input wire clk,
                 phase <= UNLOAD_PHASE;
                 sum_cycle_counter <= 0;
                 load_counter <= 0;
-                complete <= 1;
 
                 debug_swapping <= 0;
                 debug_halt <= 1;
@@ -634,6 +632,9 @@ module {name}(input wire clk,
             if(sort_x_should_swap) begin
                 swap <= 1;
                 temp_blk_id <= active_in;
+            end
+            else begin
+                swap <= 0;
             end
 
             broadcast <= temp_coord;
@@ -789,7 +790,6 @@ module {name}(input wire clk,
 
             if(load_counter == UNLOAD_DELAY - 1) begin
                 debug_halt <= 0;
-                complete <= 0;
                 load_counter <= 0;
                 phase <= LOAD_PHASE;
                 state <= STATE_INIT_0;
