@@ -650,8 +650,8 @@ module {name}(input wire clk,
             if(sort_swap) begin
                 temp_coord <= active_in;
                 temp_blk_id <= speculated_temp_blk_id;
-                sort_swap <= 0;
             end
+            sort_swap <= 0;
 
             if(sort_pass_done) begin
                 sort_swap_counter <= 0;
@@ -683,8 +683,8 @@ module {name}(input wire clk,
             if(sort_swap) begin
                 temp_coord <= active_in;
                 temp_blk_id <= speculated_temp_blk_id;
-                sort_swap <= 0;
             end
+            sort_swap <= 0;
 
             if(sort_pass_done) begin
                 if(sort_iter_done) begin
@@ -722,8 +722,8 @@ module {name}(input wire clk,
             if(sort_swap) begin
                 temp_coord <= active_in;
                 temp_blk_id <= speculated_temp_blk_id;
-                sort_swap <= 0;
             end
+            sort_swap <= 0;
 
             if(sort_pass_done) begin
                 sort_swap_counter <= 0;
