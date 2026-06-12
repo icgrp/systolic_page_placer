@@ -347,12 +347,8 @@ module {name}(input wire clk,
 
     reg [$clog2(N+B+1)-1:0] load_counter = 0;
 
+    // Note: reset moved to the end in order to reduce control sets
     always @(posedge clk) begin
-        if(rst) begin
-            state <= STATE_INIT_0;
-            phase <= LOAD_PHASE;
-        end
-        else begin
         case(state)
         STATE_INIT_0: begin
             k_x <= 0;
@@ -807,6 +803,9 @@ module {name}(input wire clk,
             end
         end
         endcase
+        if(rst) begin
+            state <= STATE_INIT_0;
+            phase <= LOAD_PHASE;
         end
     end
     //********************************************************
