@@ -638,7 +638,7 @@ module {name}(input wire clk,
             // (or their blk_ids if its the first time)
 
             // So active in has the neighbor's block id
-            swap_sort <= sort_x_should_swap;
+            sort_swap <= sort_x_should_swap;
             speculated_temp_blk_id <= active_in;
             broadcast <= temp_coord;
 
@@ -647,7 +647,7 @@ module {name}(input wire clk,
         STATE_SORT_X_EXCHANGE: begin
             // X exchange/control: receive temp_coord if the previous compare
             // selected a swap, then either continue X passes or move to Y passes.
-            if(swap_sort) begin
+            if(sort_swap) begin
                 temp_coord <= active_in;
                 temp_blk_id <= speculated_temp_blk_id;
                 sort_swap <= 0;
