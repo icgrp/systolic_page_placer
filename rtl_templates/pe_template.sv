@@ -134,6 +134,7 @@ module {name}(input wire clk,
     reg [$clog2(D+1)-1:0]               sort_swap_counter;
     reg [$clog2($clog2(D+1)+1)-1:0]     sort_itter_counter;
     reg [$clog2(N_t-1+1)-1:0]           temp_blk_id;
+    reg [$clog2(N_t-1+1)-1:0]           speculated_temp_blk_id;
     reg [2*$clog2(B_t+1)-1:0]           temp_coord;
     //********************************************************
     // Summing Registers
@@ -638,12 +639,11 @@ module {name}(input wire clk,
             // So active in has the neighbor's block id
             if(sort_x_should_swap) begin
                 swap <= 1;
-                temp_blk_id <= active_in;
             end
             else begin
                 swap <= 0;
             end
-
+            speculated_temp_blk_id <= active_in;
             broadcast <= temp_coord;
 
             state <= STATE_SORT_X_EXCHANGE;
@@ -653,6 +653,7 @@ module {name}(input wire clk,
             // selected a swap, then either continue X passes or move to Y passes.
             if(swap) begin
                 temp_coord <= active_in;
+                temp_blk_id <= speculated_temp_blk_id;
                 swap <= 0;
             end
 
@@ -675,9 +676,8 @@ module {name}(input wire clk,
             // with the vertical neighbor selected by phase 3 or 1.
             if(sort_y_should_swap) begin
                 swap <= 1;
-                temp_blk_id <= active_in;
             end
-
+            speculated_temp_blk_id <= active_in;
             broadcast <= temp_coord;
 
             state <= STATE_SORT_Y_EXCHANGE;
@@ -688,6 +688,7 @@ module {name}(input wire clk,
             // X pass before summing.
             if(swap) begin
                 temp_coord <= active_in;
+                temp_blk_id <= speculated_temp_blk_id;
                 swap <= 0;
             end
 
@@ -717,9 +718,8 @@ module {name}(input wire clk,
             // pass, but completion transitions directly into summing.
             if(sort_x_should_swap) begin
                 swap <= 1;
-                temp_blk_id <= active_in;
             end
-
+            speculated_temp_blk_id <= active_in;
             broadcast <= temp_coord;
 
             state <= STATE_SORT_FINAL_X_EXCHANGE;
@@ -729,6 +729,7 @@ module {name}(input wire clk,
             // the sum phase once all D compare/exchange pairs have run.
             if(swap) begin
                 temp_coord <= active_in;
+                temp_blk_id <= speculated_temp_blk_id;
                 swap <= 0;
             end
 
