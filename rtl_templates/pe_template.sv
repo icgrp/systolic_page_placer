@@ -201,14 +201,13 @@ module {name}(input wire clk,
     wire x_phase = (phase == 0 || phase == 2);
     wire y_phase = (phase == 1 || phase == 3);
 
-    wire x_master = (phase == 0) ? ~odd_col : odd_col;         // (only valid if x_phase is valid)     swap x master: if phase is 0, then even, if phase is 2, then odd.
-    wire y_master = (phase == 1) ? odd_row : ~odd_row;         // (only valid if y_phase is valid)     swap y master: if phase is 1, then odd, if phase is 3, then even.
+    wire x_master = (phase == 0) ? ~odd_col : odd_col;          // (only valid if x_phase is valid)     swap x master: if phase is 0, then even, if phase is 2, then odd.
+    wire y_master = (phase == 1) ? odd_row : ~odd_row;          // (only valid if y_phase is valid)     swap y master: if phase is 1, then odd, if phase is 3, then even.
 
     wire master = x_phase ? x_master : y_master;
 
-    wire sort_master = (phase == 0) ? ~odd_col :
-                       (phase == 2) ?  odd_col :
-                       (phase == 3) ? ~odd_row : odd_row;
+    wire sort_master_x = (phase == 0) ? ~odd_col : odd_col;     // assumes phase is 0 or 2
+    wire sort_master_y = (phase == 3) ? ~odd_row : odd_row;     // assumes phase is 1 or 3
 
     // fake register
     reg [BUS_WIDTH-1:0] active_in = 0; // idk if this should actually be set to zero or not since it is fake
@@ -237,6 +236,35 @@ module {name}(input wire clk,
         end
         endcase
     end
+    
+    // This mux assumes phase is 0 or 2
+    reg [BUS_WIDTH-1:0] sort_active_in_x = 0;
+    reg sort_illegal_move_x = 0;
+    always @(*) begin
+        if(phase[1] == 0) begin
+            sort_active_in_x = (~odd_col) ? in_right : in_left;
+            sort_illegal_move_x = PHASE_0_ILLEGAL;
+        end
+        else begin
+            sort_active_in_x = (odd_col) ? in_right : in_left;
+            sort_illegal_move_x = PHASE_2_ILLEGAL;
+        end
+    end
+    
+    // This mux assums phase is 1 or 3
+    reg [BUS_WIDTH-1:0] sort_active_in_y = 0;
+    reg sort_illegal_move_y = 0;
+    always @(*) begin
+        if(phase[1] == 0) begin
+            sort_active_in_y = (odd_row) ? in_up : in_down;
+            sort_illegal_move_y = PHASE_1_ILLEGAL;
+        end
+        else begin
+            sort_active_in_y = (~odd_row) ? in_up : in_down;
+            sort_illegal_move_y = PHASE_3_ILLEGAL;
+        end
+    end
+
     //********************************************************
     // Swapping logic
 
@@ -270,10 +298,12 @@ module {name}(input wire clk,
     //********************************************************
     // Sorting logic
 
-    wire sort_condition = ((sort_master && (active_in < temp_blk_id)) || (!sort_master && !(active_in < temp_blk_id)));
+    wire sort_condition_x = ((sort_master_x && (active_in_x < temp_blk_id)) || (!sort_master_x && !(active_in < temp_blk_id)));
+    wire sort_condition_y = ((sort_master_y && (active_in_y < temp_blk_id)) || (!sort_master_y && !(active_in < temp_blk_id)));
 
-    wire sort_x_should_swap = ((((odd_row == 0) && sort_condition) || ((odd_row != 0) && !sort_condition)) && !illegal_move);
-    wire sort_y_should_swap = (sort_condition && !illegal_move);
+    wire sort_x_should_swap = ((((odd_row == 0) && sort_condition_x) || ((odd_row != 0) && !sort_condition_x)) && !sort_illegal_move_x);
+    wire sort_y_should_swap = (sort_condition_y && !sort_illegal_move_y);
+    
     wire sort_pass_done = (sort_swap_counter == (D - 1));
     wire sort_iter_done = (sort_itter_counter == ($clog2(D) - 1));
     //********************************************************
