@@ -136,6 +136,8 @@ module {name}(input wire clk,
     reg [$clog2(N_t-1+1)-1:0]           temp_blk_id;
     reg [$clog2(N_t-1+1)-1:0]           speculated_temp_blk_id;
     reg [2*$clog2(B_t+1)-1:0]           temp_coord;
+
+    reg                                 swap_sort;
     //********************************************************
     // Summing Registers
 
@@ -521,7 +523,7 @@ module {name}(input wire clk,
             // if full_s is negitive or we have
             // a hot move, update k_times_coord and start swapping
             if((full_s_msb | active_hot_move) && !illegal_move) begin
-                swap <= 1;  // this state assumes swap has been already been cleared to 0 (this happens in the sorting phase)
+                swap <= 1;
                 blk_id <= active_in;
                 if(x_phase) begin
                     k_x <= k_x_comp;
@@ -529,6 +531,9 @@ module {name}(input wire clk,
                 else begin
                     k_y <= k_y_comp;
                 end
+            end
+            else begin
+                swap <= 0;
             end
 
             broadcast <= k;
@@ -633,7 +638,7 @@ module {name}(input wire clk,
             // (or their blk_ids if its the first time)
 
             // So active in has the neighbor's block id
-            swap <= sort_x_should_swap;
+            swap_sort <= sort_x_should_swap;
             speculated_temp_blk_id <= active_in;
             broadcast <= temp_coord;
 
@@ -642,10 +647,10 @@ module {name}(input wire clk,
         STATE_SORT_X_EXCHANGE: begin
             // X exchange/control: receive temp_coord if the previous compare
             // selected a swap, then either continue X passes or move to Y passes.
-            if(swap) begin
+            if(swap_sort) begin
                 temp_coord <= active_in;
                 temp_blk_id <= speculated_temp_blk_id;
-                swap <= 0;
+                swap_swap <= 0;
             end
 
             if(sort_pass_done) begin
@@ -665,7 +670,7 @@ module {name}(input wire clk,
         STATE_SORT_Y_COMPARE: begin
             // Y compare: decide whether to exchange temp_blk_id/temp_coord
             // with the vertical neighbor selected by phase 3 or 1.
-            swap <= sort_y_should_swap;
+            swap_swap <= sort_y_should_swap;
             speculated_temp_blk_id <= active_in;
             broadcast <= temp_coord;
 
@@ -675,10 +680,10 @@ module {name}(input wire clk,
             // Y exchange/control: receive temp_coord if needed. A completed
             // Y pass either starts another X/Y iteration or moves to the final
             // X pass before summing.
-            if(swap) begin
+            if(swap_swap) begin
                 temp_coord <= active_in;
                 temp_blk_id <= speculated_temp_blk_id;
-                swap <= 0;
+                swap_swap <= 0;
             end
 
             if(sort_pass_done) begin
@@ -705,7 +710,7 @@ module {name}(input wire clk,
         STATE_SORT_FINAL_X_COMPARE: begin
             // Final X compare: same compare/exchange operation as a normal X
             // pass, but completion transitions directly into summing.
-            swap <= sort_x_should_swap;
+            swap_swap <= sort_x_should_swap;
             speculated_temp_blk_id <= active_in;
             broadcast <= temp_coord;
 
@@ -714,10 +719,10 @@ module {name}(input wire clk,
         STATE_SORT_FINAL_X_EXCHANGE: begin
             // Final X exchange/control: finish the final row pass and start
             // the sum phase once all D compare/exchange pairs have run.
-            if(swap) begin
+            if(swap_swap) begin
                 temp_coord <= active_in;
                 temp_blk_id <= speculated_temp_blk_id;
-                swap <= 0;
+                swap_swap <= 0;
             end
 
             if(sort_pass_done) begin
