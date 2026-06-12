@@ -137,7 +137,7 @@ module {name}(input wire clk,
     reg [$clog2(N_t-1+1)-1:0]           speculated_temp_blk_id;
     reg [2*$clog2(B_t+1)-1:0]           temp_coord;
 
-    reg                                 swap_sort;
+    reg                                 sort_swap;
     //********************************************************
     // Summing Registers
 
@@ -650,7 +650,7 @@ module {name}(input wire clk,
             if(swap_sort) begin
                 temp_coord <= active_in;
                 temp_blk_id <= speculated_temp_blk_id;
-                swap_swap <= 0;
+                sort_swap <= 0;
             end
 
             if(sort_pass_done) begin
@@ -670,7 +670,7 @@ module {name}(input wire clk,
         STATE_SORT_Y_COMPARE: begin
             // Y compare: decide whether to exchange temp_blk_id/temp_coord
             // with the vertical neighbor selected by phase 3 or 1.
-            swap_swap <= sort_y_should_swap;
+            sort_swap <= sort_y_should_swap;
             speculated_temp_blk_id <= active_in;
             broadcast <= temp_coord;
 
@@ -680,10 +680,10 @@ module {name}(input wire clk,
             // Y exchange/control: receive temp_coord if needed. A completed
             // Y pass either starts another X/Y iteration or moves to the final
             // X pass before summing.
-            if(swap_swap) begin
+            if(sort_swap) begin
                 temp_coord <= active_in;
                 temp_blk_id <= speculated_temp_blk_id;
-                swap_swap <= 0;
+                sort_swap <= 0;
             end
 
             if(sort_pass_done) begin
@@ -710,7 +710,7 @@ module {name}(input wire clk,
         STATE_SORT_FINAL_X_COMPARE: begin
             // Final X compare: same compare/exchange operation as a normal X
             // pass, but completion transitions directly into summing.
-            swap_swap <= sort_x_should_swap;
+            sort_swap <= sort_x_should_swap;
             speculated_temp_blk_id <= active_in;
             broadcast <= temp_coord;
 
@@ -719,10 +719,10 @@ module {name}(input wire clk,
         STATE_SORT_FINAL_X_EXCHANGE: begin
             // Final X exchange/control: finish the final row pass and start
             // the sum phase once all D compare/exchange pairs have run.
-            if(swap_swap) begin
+            if(sort_swap) begin
                 temp_coord <= active_in;
                 temp_blk_id <= speculated_temp_blk_id;
-                swap_swap <= 0;
+                sort_swap <= 0;
             end
 
             if(sort_pass_done) begin
