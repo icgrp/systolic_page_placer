@@ -298,8 +298,8 @@ module {name}(input wire clk,
     //********************************************************
     // Sorting logic
 
-    wire sort_condition_x = ((sort_master_x && (active_in_x < temp_blk_id)) || (!sort_master_x && !(active_in < temp_blk_id)));
-    wire sort_condition_y = ((sort_master_y && (active_in_y < temp_blk_id)) || (!sort_master_y && !(active_in < temp_blk_id)));
+    wire sort_condition_x = ((sort_master_x && (sort_active_in_x < temp_blk_id)) || (!sort_master_x && !(sort_active_in_x < temp_blk_id)));
+    wire sort_condition_y = ((sort_master_y && (sort_active_in_y < temp_blk_id)) || (!sort_master_y && !(sort_active_in_y < temp_blk_id)));
 
     wire sort_x_should_swap = ((((odd_row == 0) && sort_condition_x) || ((odd_row != 0) && !sort_condition_x)) && !sort_illegal_move_x);
     wire sort_y_should_swap = (sort_condition_y && !sort_illegal_move_y);
