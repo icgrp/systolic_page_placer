@@ -238,7 +238,7 @@ module {name}(input wire clk,
     end
     
     // This mux assumes phase is 0 or 2
-    reg [BUS_WIDTH-1:0] sort_active_in_x = 0;
+    reg [$clog2(N_t-1+1)-1:0] sort_active_in_x = 0;
     reg sort_illegal_move_x = 0;
     always @(*) begin
         if(phase[1] == 0) begin
@@ -252,7 +252,7 @@ module {name}(input wire clk,
     end
     
     // This mux assums phase is 1 or 3
-    reg [BUS_WIDTH-1:0] sort_active_in_y = 0;
+    reg [$clog2(N_t-1+1)-1:0] sort_active_in_y = 0;
     reg sort_illegal_move_y = 0;
     always @(*) begin
         if(phase[1] == 0) begin
