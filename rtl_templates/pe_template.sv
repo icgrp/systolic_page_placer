@@ -633,12 +633,7 @@ module {name}(input wire clk,
             // (or their blk_ids if its the first time)
 
             // So active in has the neighbor's block id
-            if(sort_x_should_swap) begin
-                swap <= 1;
-            end
-            else begin
-                swap <= 0;
-            end
+            swap <= sort_x_should_swap;
             speculated_temp_blk_id <= active_in;
             broadcast <= temp_coord;
 
@@ -670,9 +665,7 @@ module {name}(input wire clk,
         STATE_SORT_Y_COMPARE: begin
             // Y compare: decide whether to exchange temp_blk_id/temp_coord
             // with the vertical neighbor selected by phase 3 or 1.
-            if(sort_y_should_swap) begin
-                swap <= 1;
-            end
+            swap <= sort_y_should_swap;
             speculated_temp_blk_id <= active_in;
             broadcast <= temp_coord;
 
@@ -712,9 +705,7 @@ module {name}(input wire clk,
         STATE_SORT_FINAL_X_COMPARE: begin
             // Final X compare: same compare/exchange operation as a normal X
             // pass, but completion transitions directly into summing.
-            if(sort_x_should_swap) begin
-                swap <= 1;
-            end
+            swap <= sort_x_should_swap;
             speculated_temp_blk_id <= active_in;
             broadcast <= temp_coord;
 
