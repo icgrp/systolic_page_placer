@@ -99,7 +99,7 @@ module {name}(input wire clk,
     reg [$clog2(MAX_SWAPS_PER_UPDATE+1)-1:0] swaps_per_update;
     reg [$clog2(MAX_NUM_OF_UPDATES+1)-1:0]   num_of_updates;
 
-    reg [4:0] state;
+    (* fsm_encoding = "one-hot" *) reg [4:0] state;
     reg [$clog2(MAX_NUM_OF_UPDATES+1)-1:0] update_count;
 
     reg [$clog2(N_t-1+1)-1:0]       blk_id;
