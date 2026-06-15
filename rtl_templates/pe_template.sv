@@ -99,7 +99,7 @@ module {name}(input wire clk,
     reg [$clog2(MAX_SWAPS_PER_UPDATE+1)-1:0] swaps_per_update;
     reg [$clog2(MAX_NUM_OF_UPDATES+1)-1:0]   num_of_updates;
 
-    (* fsm_encoding = "one-hot" *) reg [4:0] state;
+    reg [23:0] state;
     reg [$clog2(MAX_NUM_OF_UPDATES+1)-1:0] update_count;
 
     reg [$clog2(N_t-1+1)-1:0]       blk_id;
@@ -335,40 +335,40 @@ module {name}(input wire clk,
     //#########################################################################################################################
     
     // init
-    localparam STATE_INIT_0 = 15;
+    localparam STATE_INIT_0 = 24'b100000000000000000000000;
 
     // load
-    localparam STATE_LOAD_0 = 17;
-    localparam STATE_LOAD_1 = 18;
-    localparam STATE_LOAD_2 = 19;
-    localparam STATE_LOAD_3 = 20;
-    localparam STATE_LOAD_4 = 21;
+    localparam STATE_LOAD_0 = 24'b000000000000000000000001;
+    localparam STATE_LOAD_1 = 24'b0000000000000000000000010;
+    localparam STATE_LOAD_2 = 24'b000000000000000000000100;
+    localparam STATE_LOAD_3 = 24'b000000000000000000001000;
+    localparam STATE_LOAD_4 = 24'b000000000000000000010000;
 
     // sort
-    localparam STATE_SORT_X_COMPARE        = 10;
-    localparam STATE_SORT_X_EXCHANGE       = 11;
-    localparam STATE_SORT_Y_COMPARE        = 12;
-    localparam STATE_SORT_Y_EXCHANGE       = 13;
-    localparam STATE_SORT_FINAL_X_COMPARE  = 22;
-    localparam STATE_SORT_FINAL_X_EXCHANGE = 23;
+    localparam STATE_SORT_X_COMPARE        = 24'b000000000000000000100000;
+    localparam STATE_SORT_X_EXCHANGE       = 24'b000000000000000001000000;
+    localparam STATE_SORT_Y_COMPARE        = 24'b000000000000000010000000;
+    localparam STATE_SORT_Y_EXCHANGE       = 24'b000000000000000100000000;
+    localparam STATE_SORT_FINAL_X_COMPARE  = 24'b000000000000001000000000;
+    localparam STATE_SORT_FINAL_X_EXCHANGE = 24'b000000000000010000000000;
 
     // swap
-    localparam STATE_SWAP_0 = 0;
-    localparam STATE_SWAP_1 = 1;
-    localparam STATE_SWAP_2 = 2;
-    localparam STATE_SWAP_3 = 3;
-    localparam STATE_SWAP_4 = 4;
-    localparam STATE_SWAP_5 = 5;
-    localparam STATE_SWAP_6 = 6;
-    localparam STATE_SWAP_7 = 7;
-    localparam STATE_SWAP_8 = 8;
-    localparam STATE_SWAP_9 = 9;
+    localparam STATE_SWAP_0 = 24'b000000000000100000000000;
+    localparam STATE_SWAP_1 = 24'b000000000001000000000000;
+    localparam STATE_SWAP_2 = 24'b000000000010000000000000;
+    localparam STATE_SWAP_3 = 24'b000000000100000000000000;
+    localparam STATE_SWAP_4 = 24'b000000001000000000000000;
+    localparam STATE_SWAP_5 = 24'b000000010000000000000000;
+    localparam STATE_SWAP_6 = 24'b000000100000000000000000;
+    localparam STATE_SWAP_7 = 24'b000001000000000000000000;
+    localparam STATE_SWAP_8 = 24'b000010000000000000000000;
+    localparam STATE_SWAP_9 = 24'b000100000000000000000000;
 
     // sum
-    localparam STATE_SUM_0 = 14;
+    localparam STATE_SUM_0 = 24'b001000000000000000000000;
 
     // unload
-    localparam STATE_UNLOAD_0 = 16;
+    localparam STATE_UNLOAD_0 = 24'b010000000000000000000000;
 
     // config params
     parameter integer START_DELAY = -1;
