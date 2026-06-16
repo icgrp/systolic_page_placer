@@ -22,12 +22,22 @@ module placer_interface(input wire clk,
     localparam SIZE_OF_UNLOAD = N;
     
     wire not_rst = ~rst;
+    (* max_fanout = 150 *) reg not_rst_d0 = 1;
+    (* max_fanout = 150 *) reg not_rst_d1 = 1;
+    (* max_fanout = 150 *) reg not_rst_d2 = 1;
+    always @(posedge clk) begin
+        not_rst_d0 <= not_rst;
+        not_rst_d1 <= not_rst_d0;
+        not_rst_d2 <= not_rst_d1;
+    end
+
+
     reg load_enable_in;
     wire [23-1:0] unload_out;
     wire complete;
     
-    (* dont_touch = "yes" *) placer placer_inst(.clk(clk),
-                       .rst(not_rst),
+    placer placer_inst(.clk(clk),
+                       .rst(not_rst_d2),
                        .load_enable_in(load_enable_in),
                        .complete(complete),
                        .load_in(data_in),
@@ -46,7 +56,7 @@ module placer_interface(input wire clk,
     localparam STATE_5 = 5;
     localparam STATE_6 = 6;
     always @(posedge clk) begin
-        if(~rst) begin
+        if(not_rst_d2) begin
             we <= 0;
             ack <= 0;
             address <= 0;

@@ -87,22 +87,8 @@ module fixed_pe(input wire clk,
     localparam STATE_WAIT_SWAP = 10;
 
     reg [3:0] state;
+    // Note: reset moved to the end in order to reduce control sets
     always @(posedge clk) begin
-        if(rst) begin
-            load_counter <= 0;
-            enable_load_x_sums <= 0;
-            enable_load_y_sums <= 0;
-            start_delay_counter <= 0;
-            sort_counter <= 0;
-            sum_cycle_counter <= 0;
-            swap_cycle_counter <= 0;
-            enable_sums <= 0;
-            sum_mode <= 0;
-            out <= 0;
-            swap_set_counter <= 0;
-            state <= STATE_INIT;
-        end
-        else begin
         case(state)
         STATE_INIT: begin // 0
             load_counter <= 0;
@@ -217,6 +203,19 @@ module fixed_pe(input wire clk,
             swap_cycle_counter <= swap_cycle_counter + 1;
         end
         endcase
+        if(rst) begin
+            load_counter <= 0;
+            enable_load_x_sums <= 0;
+            enable_load_y_sums <= 0;
+            start_delay_counter <= 0;
+            sort_counter <= 0;
+            sum_cycle_counter <= 0;
+            swap_cycle_counter <= 0;
+            enable_sums <= 0;
+            sum_mode <= 0;
+            out <= 0;
+            swap_set_counter <= 0;
+            state <= STATE_INIT;
         end
     end
     //********************************************************

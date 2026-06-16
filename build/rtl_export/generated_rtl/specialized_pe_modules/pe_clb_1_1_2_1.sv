@@ -2,11 +2,11 @@ module pe_clb_1_1_2_1(input wire clk,
           input wire rst,
           input wire load_enable_in,
           output reg load_enable_out = 0,
-          output reg complete = 0,
+          output wire complete,
 
           input wire [BUS_WIDTH-1:0] in_right,
           output wire [BUS_WIDTH-1:0] out_right,
-          output reg out_hot_move_right = 0,
+          output wire out_hot_move_right,
 
           input wire [BUS_WIDTH-1:0] in_left,
           input wire in_hot_move_left,
@@ -14,7 +14,7 @@ module pe_clb_1_1_2_1(input wire clk,
 
           input wire [BUS_WIDTH-1:0] in_up,
           output wire [BUS_WIDTH-1:0] out_up,
-          output reg out_hot_move_up = 0,
+          output wire out_hot_move_up,
 
           input wire [BUS_WIDTH-1:0] in_down,
           input wire in_hot_move_down,
@@ -44,7 +44,7 @@ module pe_clb_1_1_2_1(input wire clk,
     parameter integer MSAD = -1;                // Maximum Sub-Array Depth
     parameter integer WSRD = -1;                // worst sum return depth, the number of cycles for a newly computed sum to arrive at the input of the farthest PE across all sub-arrays.    
     parameter integer RAM_CYCLES = -1;          // should be set to 1
-    parameter integer MULT_CYCLES = -1;         // should be set to 0 for now
+    parameter integer MULT_CYCLES = -1;         // should be set to 1
     parameter integer FIXED_SUM_CYCLES = -1;    // should be set to 1
     parameter integer SCD = -1;
 
@@ -99,12 +99,13 @@ module pe_clb_1_1_2_1(input wire clk,
     reg [$clog2(MAX_SWAPS_PER_UPDATE+1)-1:0] swaps_per_update;
     reg [$clog2(MAX_NUM_OF_UPDATES+1)-1:0]   num_of_updates;
 
-    reg [4:0] state;
+    reg [23:0] state;
     reg [$clog2(MAX_NUM_OF_UPDATES+1)-1:0] update_count;
 
     reg [$clog2(N_t-1+1)-1:0]       blk_id;
     reg [$clog2(MAX_K+1)-1:0]       k;
 
+    reg [$clog2(MAX_K*R_t+1)-1:0]   k_r;
     reg [$clog2(MAX_K*B_t+1)-1:0]   k_x;
     reg [$clog2(MAX_K*B_t+1)-1:0]   k_y;
 
@@ -113,12 +114,16 @@ module pe_clb_1_1_2_1(input wire clk,
     //********************************************************
     // Swapping Registers
 
+    // Hot move
+    reg                                             out_hot_move;
+
     // unsigned
     reg [$clog2(MAX_SWAPS_PER_UPDATE+1)-1:0]        swap_count;
 
     // signed
     reg signed [$clog2(2*P+1)+1-1:0]                partial;
     reg signed [$clog2(2*P+MAX_K*R_t+1)+1-1:0]      half_s;
+    reg signed [$clog2(2*P+MAX_K*R_t+1)+1-1:0]      other_half_s;
     reg signed [$clog2(2*(2*P+MAX_K*R_t+1))+1-1:0]  full_s;
 
     // flag
@@ -129,7 +134,10 @@ module pe_clb_1_1_2_1(input wire clk,
     reg [$clog2(D+1)-1:0]               sort_swap_counter;
     reg [$clog2($clog2(D+1)+1)-1:0]     sort_itter_counter;
     reg [$clog2(N_t-1+1)-1:0]           temp_blk_id;
+    reg [$clog2(N_t-1+1)-1:0]           speculated_temp_blk_id;
     reg [2*$clog2(B_t+1)-1:0]           temp_coord;
+
+    reg                                 sort_swap;
     //********************************************************
     // Summing Registers
 
@@ -176,6 +184,12 @@ module pe_clb_1_1_2_1(input wire clk,
     assign out_up = (state != STATE_SUM_0) ? broadcast : partial_update_sum;
     assign out_down = (state != STATE_SUM_0) ? broadcast : completed_update_sum;
     //********************************************************
+    // Hot move
+    assign out_hot_move_right = out_hot_move;
+    assign out_hot_move_up = out_hot_move;
+    //********************************************************
+    assign complete = (state == STATE_UNLOAD_0);
+    //********************************************************
     // General logic
 
     wire [$clog2(B_t+1)-1:0] x = X;
@@ -187,14 +201,13 @@ module pe_clb_1_1_2_1(input wire clk,
     wire x_phase = (phase == 0 || phase == 2);
     wire y_phase = (phase == 1 || phase == 3);
 
-    wire x_master = (phase == 0) ? ~odd_col : odd_col;         // (only valid if x_phase is valid)     swap x master: if phase is 0, then even, if phase is 2, then odd.
-    wire y_master = (phase == 1) ? odd_row : ~odd_row;         // (only valid if y_phase is valid)     swap y master: if phase is 1, then odd, if phase is 3, then even.
+    wire x_master = (phase == 0) ? ~odd_col : odd_col;          // (only valid if x_phase is valid)     swap x master: if phase is 0, then even, if phase is 2, then odd.
+    wire y_master = (phase == 1) ? odd_row : ~odd_row;          // (only valid if y_phase is valid)     swap y master: if phase is 1, then odd, if phase is 3, then even.
 
     wire master = x_phase ? x_master : y_master;
 
-    wire sort_master = (phase == 0) ? ~odd_col :
-                       (phase == 2) ?  odd_col :
-                       (phase == 3) ? ~odd_row : odd_row;
+    wire sort_master_x = (phase == 0) ? ~odd_col : odd_col;     // assumes phase is 0 or 2
+    wire sort_master_y = (phase == 3) ? ~odd_row : odd_row;     // assumes phase is 1 or 3
 
     // fake register
     reg [BUS_WIDTH-1:0] active_in = 0; // idk if this should actually be set to zero or not since it is fake
@@ -223,6 +236,35 @@ module pe_clb_1_1_2_1(input wire clk,
         end
         endcase
     end
+    
+    // This mux assumes phase is 0 or 2
+    reg [$clog2(N_t-1+1)-1:0] sort_active_in_x = 0;
+    reg sort_illegal_move_x = 0;
+    always @(*) begin
+        if(phase[1] == 0) begin
+            sort_active_in_x = (~odd_col) ? in_right : in_left;
+            sort_illegal_move_x = PHASE_0_ILLEGAL;
+        end
+        else begin
+            sort_active_in_x = (odd_col) ? in_right : in_left;
+            sort_illegal_move_x = PHASE_2_ILLEGAL;
+        end
+    end
+    
+    // This mux assums phase is 1 or 3
+    reg [$clog2(N_t-1+1)-1:0] sort_active_in_y = 0;
+    reg sort_illegal_move_y = 0;
+    always @(*) begin
+        if(phase[1] == 0) begin
+            sort_active_in_y = (odd_row) ? in_up : in_down;
+            sort_illegal_move_y = PHASE_1_ILLEGAL;
+        end
+        else begin
+            sort_active_in_y = (~odd_row) ? in_up : in_down;
+            sort_illegal_move_y = PHASE_3_ILLEGAL;
+        end
+    end
+
     //********************************************************
     // Swapping logic
 
@@ -238,8 +280,8 @@ module pe_clb_1_1_2_1(input wire clk,
         endcase
     end
 
-    wire [$clog2(MAX_K*B_t+1)-1:0] k_x_comp = (master == 1) ? k_x + k_r_comp : k_x - k_r_comp;
-    wire [$clog2(MAX_K*B_t+1)-1:0] k_y_comp = (master == 1) ? k_y + k_r_comp : k_y - k_r_comp;
+    wire [$clog2(MAX_K*B_t+1)-1:0] k_x_comp = (master == 1) ? k_x + k_r : k_x - k_r;
+    wire [$clog2(MAX_K*B_t+1)-1:0] k_y_comp = (master == 1) ? k_y + k_r : k_y - k_r;
     wire [$clog2(MAX_K*B_t+1)-1:0] k_times_coord = (x_phase == 1) ? k_x : k_y;
 
     wire [$clog2(MAX_K*B_t+1)-1:0] sum_p = (x_phase == 1) ? sum_px : sum_py;
@@ -251,15 +293,17 @@ module pe_clb_1_1_2_1(input wire clk,
 
     // signed
     wire signed [$clog2(2*P+1)+1-1:0]                   partial_comp = ($signed(k_times_coord) - $signed(sum_p)) << 1;
-    wire signed [$clog2(2*P+MAX_K*R_t+1)+1-1:0]         half_s_comp = (master == 1) ? partial + $signed(k_r_comp) : partial - $signed(k_r_comp); 
-    wire signed [$clog2(2*(2*P+MAX_K*R_t+1))+1-1:0]     full_s_comp = (master == 1) ? half_s - $signed(active_in) : $signed(active_in) - half_s;
+    wire signed [$clog2(2*P+MAX_K*R_t+1)+1-1:0]         half_s_comp = (master == 1) ? partial + $signed(k_r) : partial - $signed(k_r); 
+    wire signed [$clog2(2*(2*P+MAX_K*R_t+1))+1-1:0]     full_s_comp = (master == 1) ? half_s - other_half_s : other_half_s - half_s;
     //********************************************************
     // Sorting logic
 
-    wire sort_condition = ((sort_master && (active_in < temp_blk_id)) || (!sort_master && !(active_in < temp_blk_id)));
+    wire sort_condition_x = !(sort_master_x ^ (sort_active_in_x < temp_blk_id));
+    wire sort_condition_y = !(sort_master_y ^ (sort_active_in_y < temp_blk_id));
 
-    wire sort_x_should_swap = ((((odd_row == 0) && sort_condition) || ((odd_row != 0) && !sort_condition)) && !illegal_move);
-    wire sort_y_should_swap = (sort_condition && !illegal_move);
+    wire sort_x_should_swap = ((((odd_row == 0) && sort_condition_x) || ((odd_row != 0) && !sort_condition_x)) && !sort_illegal_move_x);
+    wire sort_y_should_swap = (sort_condition_y && !sort_illegal_move_y);
+    
     wire sort_pass_done = (sort_swap_counter == (D - 1));
     wire sort_iter_done = (sort_itter_counter == ($clog2(D) - 1));
     //********************************************************
@@ -291,40 +335,40 @@ module pe_clb_1_1_2_1(input wire clk,
     //#########################################################################################################################
     
     // init
-    localparam STATE_INIT_0 = 15;
+    localparam STATE_INIT_0 = 24'b100000000000000000000000;
 
     // load
-    localparam STATE_LOAD_0 = 17;
-    localparam STATE_LOAD_1 = 18;
-    localparam STATE_LOAD_2 = 19;
-    localparam STATE_LOAD_3 = 20;
-    localparam STATE_LOAD_4 = 21;
+    localparam STATE_LOAD_0 = 24'b000000000000000000000001;
+    localparam STATE_LOAD_1 = 24'b0000000000000000000000010;
+    localparam STATE_LOAD_2 = 24'b000000000000000000000100;
+    localparam STATE_LOAD_3 = 24'b000000000000000000001000;
+    localparam STATE_LOAD_4 = 24'b000000000000000000010000;
 
     // sort
-    localparam STATE_SORT_X_COMPARE        = 10;
-    localparam STATE_SORT_X_EXCHANGE       = 11;
-    localparam STATE_SORT_Y_COMPARE        = 12;
-    localparam STATE_SORT_Y_EXCHANGE       = 13;
-    localparam STATE_SORT_FINAL_X_COMPARE  = 22;
-    localparam STATE_SORT_FINAL_X_EXCHANGE = 23;
+    localparam STATE_SORT_X_COMPARE        = 24'b000000000000000000100000;
+    localparam STATE_SORT_X_EXCHANGE       = 24'b000000000000000001000000;
+    localparam STATE_SORT_Y_COMPARE        = 24'b000000000000000010000000;
+    localparam STATE_SORT_Y_EXCHANGE       = 24'b000000000000000100000000;
+    localparam STATE_SORT_FINAL_X_COMPARE  = 24'b000000000000001000000000;
+    localparam STATE_SORT_FINAL_X_EXCHANGE = 24'b000000000000010000000000;
 
     // swap
-    localparam STATE_SWAP_0 = 0;
-    localparam STATE_SWAP_1 = 1;
-    localparam STATE_SWAP_2 = 2;
-    localparam STATE_SWAP_3 = 3;
-    localparam STATE_SWAP_4 = 4;
-    localparam STATE_SWAP_5 = 5;
-    localparam STATE_SWAP_6 = 6;
-    localparam STATE_SWAP_7 = 7;
-    localparam STATE_SWAP_8 = 8;
-    localparam STATE_SWAP_9 = 9;
+    localparam STATE_SWAP_0 = 24'b000000000000100000000000;
+    localparam STATE_SWAP_1 = 24'b000000000001000000000000;
+    localparam STATE_SWAP_2 = 24'b000000000010000000000000;
+    localparam STATE_SWAP_3 = 24'b000000000100000000000000;
+    localparam STATE_SWAP_4 = 24'b000000001000000000000000;
+    localparam STATE_SWAP_5 = 24'b000000010000000000000000;
+    localparam STATE_SWAP_6 = 24'b000000100000000000000000;
+    localparam STATE_SWAP_7 = 24'b000001000000000000000000;
+    localparam STATE_SWAP_8 = 24'b000010000000000000000000;
+    localparam STATE_SWAP_9 = 24'b000100000000000000000000;
 
     // sum
-    localparam STATE_SUM_0 = 14;
+    localparam STATE_SUM_0 = 24'b001000000000000000000000;
 
     // unload
-    localparam STATE_UNLOAD_0 = 16;
+    localparam STATE_UNLOAD_0 = 24'b010000000000000000000000;
 
     // config params
     parameter integer START_DELAY = -1;
@@ -335,13 +379,8 @@ module pe_clb_1_1_2_1(input wire clk,
 
     reg [$clog2(N+B+1)-1:0] load_counter = 0;
 
+    // Note: reset moved to the end in order to reduce control sets
     always @(posedge clk) begin
-        if(rst) begin
-            state <= STATE_INIT_0;
-            phase <= LOAD_PHASE;
-            complete <= 0;
-        end
-        else begin
         case(state)
         STATE_INIT_0: begin
             k_x <= 0;
@@ -350,20 +389,12 @@ module pe_clb_1_1_2_1(input wire clk,
             swap_count <= 0;
             sum_px <= 0;
             sum_py <= 0;
-            partial <= 0;
-            half_s <= 0;
-            full_s <= 0;
-            swap <= 0;
             enable_weights <= 0;
-            out_hot_move_right <= 0;
-            out_hot_move_up <= 0;
 
             sort_swap_counter <= 0;
             sort_itter_counter <= 0;
 
             weight_mode <= 0;
-            sample_x_sum_cycle <= 0;
-            sample_y_sum_cycle <= 0;
             sum_cycle_counter <= 0;
 
             temp_coord <= {x,y};
@@ -482,26 +513,30 @@ module pe_clb_1_1_2_1(input wire clk,
         //********************************************************
         // Swapping
         STATE_SWAP_0: begin
-            // does nothing at the moment. could be used for pipelining
-            state <= STATE_SWAP_1;
-        end
-        STATE_SWAP_1: begin
+
+            // register k_r_comp for later use
+            k_r <= k_r_comp;
+
             // calculate the partial
             partial <= partial_comp;
 
             // output the hot_move
-            out_hot_move_right <= hot_move;
-            out_hot_move_up <= hot_move;
-
-            state <= STATE_SWAP_2;
+            out_hot_move <= hot_move;
+            
+            state <= STATE_SWAP_1;
         end
-        STATE_SWAP_2: begin
+        STATE_SWAP_1: begin
             // calculate this PE's half of s(x) and output it
             half_s <= half_s_comp;
 
             // This is overkill but requiers less logic,
             // and shouldn't cause any trouble
             broadcast <= half_s_comp;
+
+            state <= STATE_SWAP_2;
+        end
+        STATE_SWAP_2: begin
+            other_half_s <= active_in;            
 
             state <= STATE_SWAP_3;
         end
@@ -526,6 +561,9 @@ module pe_clb_1_1_2_1(input wire clk,
                 else begin
                     k_y <= k_y_comp;
                 end
+            end
+            else begin
+                swap <= 0;
             end
 
             broadcast <= k;
@@ -583,7 +621,6 @@ module pe_clb_1_1_2_1(input wire clk,
                 phase <= UNLOAD_PHASE;
                 sum_cycle_counter <= 0;
                 load_counter <= 0;
-                complete <= 1;
 
                 debug_swapping <= 0;
                 debug_halt <= 1;
@@ -631,11 +668,8 @@ module pe_clb_1_1_2_1(input wire clk,
             // (or their blk_ids if its the first time)
 
             // So active in has the neighbor's block id
-            if(sort_x_should_swap) begin
-                swap <= 1;
-                temp_blk_id <= active_in;
-            end
-
+            sort_swap <= sort_x_should_swap;
+            speculated_temp_blk_id <= active_in;
             broadcast <= temp_coord;
 
             state <= STATE_SORT_X_EXCHANGE;
@@ -643,10 +677,11 @@ module pe_clb_1_1_2_1(input wire clk,
         STATE_SORT_X_EXCHANGE: begin
             // X exchange/control: receive temp_coord if the previous compare
             // selected a swap, then either continue X passes or move to Y passes.
-            if(swap) begin
+            if(sort_swap) begin
                 temp_coord <= active_in;
-                swap <= 0;
+                temp_blk_id <= speculated_temp_blk_id;
             end
+            sort_swap <= 0;
 
             if(sort_pass_done) begin
                 sort_swap_counter <= 0;
@@ -665,11 +700,8 @@ module pe_clb_1_1_2_1(input wire clk,
         STATE_SORT_Y_COMPARE: begin
             // Y compare: decide whether to exchange temp_blk_id/temp_coord
             // with the vertical neighbor selected by phase 3 or 1.
-            if(sort_y_should_swap) begin
-                swap <= 1;
-                temp_blk_id <= active_in;
-            end
-
+            sort_swap <= sort_y_should_swap;
+            speculated_temp_blk_id <= active_in;
             broadcast <= temp_coord;
 
             state <= STATE_SORT_Y_EXCHANGE;
@@ -678,10 +710,11 @@ module pe_clb_1_1_2_1(input wire clk,
             // Y exchange/control: receive temp_coord if needed. A completed
             // Y pass either starts another X/Y iteration or moves to the final
             // X pass before summing.
-            if(swap) begin
+            if(sort_swap) begin
                 temp_coord <= active_in;
-                swap <= 0;
+                temp_blk_id <= speculated_temp_blk_id;
             end
+            sort_swap <= 0;
 
             if(sort_pass_done) begin
                 if(sort_iter_done) begin
@@ -707,11 +740,8 @@ module pe_clb_1_1_2_1(input wire clk,
         STATE_SORT_FINAL_X_COMPARE: begin
             // Final X compare: same compare/exchange operation as a normal X
             // pass, but completion transitions directly into summing.
-            if(sort_x_should_swap) begin
-                swap <= 1;
-                temp_blk_id <= active_in;
-            end
-
+            sort_swap <= sort_x_should_swap;
+            speculated_temp_blk_id <= active_in;
             broadcast <= temp_coord;
 
             state <= STATE_SORT_FINAL_X_EXCHANGE;
@@ -719,10 +749,11 @@ module pe_clb_1_1_2_1(input wire clk,
         STATE_SORT_FINAL_X_EXCHANGE: begin
             // Final X exchange/control: finish the final row pass and start
             // the sum phase once all D compare/exchange pairs have run.
-            if(swap) begin
+            if(sort_swap) begin
                 temp_coord <= active_in;
-                swap <= 0;
+                temp_blk_id <= speculated_temp_blk_id;
             end
+            sort_swap <= 0;
 
             if(sort_pass_done) begin
                 sort_swap_counter <= 0;
@@ -789,7 +820,6 @@ module pe_clb_1_1_2_1(input wire clk,
 
             if(load_counter == UNLOAD_DELAY - 1) begin
                 debug_halt <= 0;
-                complete <= 0;
                 load_counter <= 0;
                 phase <= LOAD_PHASE;
                 state <= STATE_INIT_0;
@@ -799,6 +829,9 @@ module pe_clb_1_1_2_1(input wire clk,
             end
         end
         endcase
+        if(rst) begin
+            state <= STATE_INIT_0;
+            phase <= LOAD_PHASE;
         end
     end
     //********************************************************
