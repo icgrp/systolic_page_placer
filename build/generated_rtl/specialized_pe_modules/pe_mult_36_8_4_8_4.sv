@@ -329,7 +329,7 @@ module pe_mult_36_8_4_8_4(input wire clk,
     //#########################################################################################################################
 
     // DSP pipelining
-    always @(posedge) begin 
+    always @(posedge clk) begin 
         sum_coord <= sum_coord_comp;
     end
 

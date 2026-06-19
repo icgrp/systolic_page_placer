@@ -329,7 +329,7 @@ module pe_memory_8_6_8_6(input wire clk,
     //#########################################################################################################################
 
     // DSP pipelining
-    always @(posedge) begin 
+    always @(posedge clk) begin 
         sum_coord <= sum_coord_comp;
     end
 
