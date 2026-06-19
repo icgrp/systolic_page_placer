@@ -145,6 +145,7 @@ module pe_mult_36_8_4_8_4(input wire clk,
 
     reg weight_mode;
 
+    reg [$clog2(B_t+1)-1:0]                 sum_coord_comp;
     reg [$clog2(V*B_t+1)-1:0]               weighted_coord;
 
     reg [$clog2(SCD+WSRD+(2*N)+1)-1:0]      sum_cycle_counter;
@@ -311,8 +312,8 @@ module pe_mult_36_8_4_8_4(input wire clk,
     //********************************************************
     // Summing logic
 
+    wire [$clog2(B_t+1)-1:0] sum_coord_comp = (weight_mode == 0) ? temp_coord[2*$clog2(B_t+1)-1:$clog2(B_t+1)] : temp_coord[$clog2(B_t+1)-1:0];
     wire [$clog2(V*B_t+1)-1:0] weighted_coord_comp = in_weight*sum_coord;
-    wire [$clog2(B_t+1)-1:0] sum_coord = (weight_mode == 0) ? temp_coord[2*$clog2(B_t+1)-1:$clog2(B_t+1)] : temp_coord[$clog2(B_t+1)-1:0];
     //********************************************************
     // LFSR logic
 
@@ -328,6 +329,10 @@ module pe_mult_36_8_4_8_4(input wire clk,
     //#########################################################################################################################
 
     // DSP pipelining
+    always @(posedge) begin 
+        sum_coord <= sum_coord_comp;
+    end
+
     always @(posedge clk) begin
         weighted_coord <= weighted_coord_comp;
     end
