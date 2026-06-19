@@ -329,7 +329,7 @@ module {name}(input wire clk,
     //#########################################################################################################################
 
     // DSP pipelining
-    always @(posedge) begin 
+    always @(posedge clk) begin 
         sum_coord <= sum_coord_comp;
     end
 
