@@ -145,7 +145,7 @@ module pe_clb_2_1_1_1(input wire clk,
 
     reg weight_mode;
 
-    reg [$clog2(B_t+1)-1:0]                 sum_coord_comp;
+    reg [$clog2(B_t+1)-1:0]                 sum_coord;
     reg [$clog2(V*B_t+1)-1:0]               weighted_coord;
 
     reg [$clog2(SCD+WSRD+(2*N)+1)-1:0]      sum_cycle_counter;
