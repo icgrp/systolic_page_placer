@@ -20,10 +20,10 @@ module placer(input wire clk,
 
     parameter integer MSAD = 40;
     parameter integer WSRD = 34;
-    parameter integer RAM_CYCLES = 1;
+    parameter integer RAM_CYCLES = 2;
     parameter integer MULT_CYCLES = 1;
     parameter integer FIXED_SUM_CYCLES = 1;
-    parameter integer SCD = 45;
+    parameter integer SCD = 46;
 
     parameter integer BUS_WIDTH = 23;
     parameter integer MAX_NUM_OF_UPDATES = 500;
@@ -161,8 +161,8 @@ module placer(input wire clk,
     wire [BUS_WIDTH-1:0] out_level0_node0;
     sum_tree_node sum_tree_level0_node0(
         .clk(clk),
-        .in_a(clb_partial_sum_out),
-        .in_b(memory_partial_sum_out),
+        .in_a(memory_partial_sum_out),
+        .in_b(clb_partial_sum_out),
         .out(out_level0_node0)
     );
     defparam sum_tree_level0_node0.BUS_WIDTH = BUS_WIDTH;
@@ -247,7 +247,7 @@ module placer(input wire clk,
     );
     defparam sum_ram_fixed_x.DATA_WIDTH = $clog2((V/2)*F_io*N_io*D + 1);
     defparam sum_ram_fixed_x.N = N;
-    defparam sum_ram_fixed_x.DELAY_CYCLES = 43;
+    defparam sum_ram_fixed_x.DELAY_CYCLES = 44;
 
     weight_ram sum_ram_fixed_y(
         .clk(clk),
@@ -259,6 +259,6 @@ module placer(input wire clk,
     );
     defparam sum_ram_fixed_y.DATA_WIDTH = $clog2((V/2)*F_io*N_io*D + 1);
     defparam sum_ram_fixed_y.N = N;
-    defparam sum_ram_fixed_y.DELAY_CYCLES = 43;
+    defparam sum_ram_fixed_y.DELAY_CYCLES = 44;
 
 endmodule

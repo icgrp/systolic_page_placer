@@ -43,7 +43,7 @@ module pe_memory_8_6_8_6(input wire clk,
 
     parameter integer MSAD = -1;                // Maximum Sub-Array Depth
     parameter integer WSRD = -1;                // worst sum return depth, the number of cycles for a newly computed sum to arrive at the input of the farthest PE across all sub-arrays.    
-    parameter integer RAM_CYCLES = -1;          // should be set to 1
+    parameter integer RAM_CYCLES = -1;          // should be set to 2
     parameter integer MULT_CYCLES = -1;         // should be set to 1
     parameter integer FIXED_SUM_CYCLES = -1;    // should be set to 1
     parameter integer SCD = -1;
@@ -128,6 +128,8 @@ module pe_memory_8_6_8_6(input wire clk,
 
     // flag
     reg                                             swap;
+    reg                                             done_swapping;
+    reg                                             ready_to_unload;
     //********************************************************
     // Sorting Registers
 
@@ -339,7 +341,7 @@ module pe_memory_8_6_8_6(input wire clk,
 
     // load
     localparam STATE_LOAD_0 = 24'b000000000000000000000001;
-    localparam STATE_LOAD_1 = 24'b0000000000000000000000010;
+    localparam STATE_LOAD_1 = 24'b000000000000000000000010;
     localparam STATE_LOAD_2 = 24'b000000000000000000000100;
     localparam STATE_LOAD_3 = 24'b000000000000000000001000;
     localparam STATE_LOAD_4 = 24'b000000000000000000010000;
@@ -598,6 +600,9 @@ module pe_memory_8_6_8_6(input wire clk,
 
             broadcast <= sum_px;
 
+            // precompute for STATE_SWAP_8 and STATE_SWAP_9
+            done_swapping <= (swap_count == (swaps_per_update - 1));
+
             state <= STATE_SWAP_8;
         end
         STATE_SWAP_8: begin
@@ -608,6 +613,9 @@ module pe_memory_8_6_8_6(input wire clk,
 
             broadcast <= sum_py;
 
+            // precompute for STATE_SWAP_9
+            ready_to_unload <= done_swapping && (update_count == num_of_updates);
+
             state <= STATE_SWAP_9;
         end
         STATE_SWAP_9: begin
@@ -616,7 +624,7 @@ module pe_memory_8_6_8_6(input wire clk,
                 sum_py <= active_in;
             end
 
-            if((swap_count == (swaps_per_update - 1)) && update_count == num_of_updates) begin
+            if(ready_to_unload) begin
                 state <= STATE_UNLOAD_0;
                 phase <= UNLOAD_PHASE;
                 sum_cycle_counter <= 0;
@@ -625,7 +633,7 @@ module pe_memory_8_6_8_6(input wire clk,
                 debug_swapping <= 0;
                 debug_halt <= 1;
             end
-            else if(swap_count == (swaps_per_update - 1)) begin        // if done swapping mode, move to sorting mode
+            else if(done_swapping) begin                               // if done swapping mode, move to sorting mode
                 swap_count <= 0;
                 state <= STATE_SORT_X_COMPARE;
                 phase <= 0;
