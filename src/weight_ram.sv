@@ -9,6 +9,8 @@ module weight_ram (input wire clk,
     parameter integer DATA_WIDTH = -1;
     parameter integer N = -1;
     parameter integer DELAY_CYCLES = -1;
+
+    reg out_pipline [DATA_WIDTH-1:0] out_pipeline;
     
     reg [$clog2(DELAY_CYCLES + 2)-1:0] counter = 0;
     reg [$clog2(N)-1:0] address = 0;
@@ -36,8 +38,9 @@ module weight_ram (input wire clk,
                     address <= address + 1;
                 end
             end
-            out_weight <= weights[address];
+            out_pipeline <= weights[address];
         end
+        out_weight <= out_pipeline;
     end
 
 endmodule

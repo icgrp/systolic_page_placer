@@ -856,7 +856,7 @@ def main():
     p.add_argument("-o", help="output dir",default="generated_rtl/")
     p.add_argument("--n_io", help="number of io", default=100)
     p.add_argument("--f_io", help="io fanin", default=1)
-    p.add_argument("--ram_cycles", help="ram cycles", default=1)
+    p.add_argument("--ram_cycles", help="ram cycles", default=2)
     p.add_argument("--mult_cycles", help="mult cycles", default=1)
     p.add_argument("--fixed_sum_cycles", help="fixed sum cycles", default=1)
     args = p.parse_args()
