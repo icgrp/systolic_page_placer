@@ -21,9 +21,9 @@ module placer(input wire clk,
     parameter integer MSAD = 40;
     parameter integer WSRD = 34;
     parameter integer RAM_CYCLES = 2;
-    parameter integer MULT_CYCLES = 2;
+    parameter integer MULT_CYCLES = 3;
     parameter integer FIXED_SUM_CYCLES = 1;
-    parameter integer SCD = 47;
+    parameter integer SCD = 48;
 
     parameter integer BUS_WIDTH = 23;
     parameter integer MAX_NUM_OF_UPDATES = 500;
@@ -247,7 +247,7 @@ module placer(input wire clk,
     );
     defparam sum_ram_fixed_x.DATA_WIDTH = $clog2((V/2)*F_io*N_io*D + 1);
     defparam sum_ram_fixed_x.N = N;
-    defparam sum_ram_fixed_x.DELAY_CYCLES = 45;
+    defparam sum_ram_fixed_x.DELAY_CYCLES = 46;
 
     weight_ram sum_ram_fixed_y(
         .clk(clk),
@@ -259,6 +259,6 @@ module placer(input wire clk,
     );
     defparam sum_ram_fixed_y.DATA_WIDTH = $clog2((V/2)*F_io*N_io*D + 1);
     defparam sum_ram_fixed_y.N = N;
-    defparam sum_ram_fixed_y.DELAY_CYCLES = 45;
+    defparam sum_ram_fixed_y.DELAY_CYCLES = 46;
 
 endmodule
