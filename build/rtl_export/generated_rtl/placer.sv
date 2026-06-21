@@ -161,7 +161,7 @@ module placer(input wire clk,
     wire [BUS_WIDTH-1:0] out_level0_node0;
     sum_tree_node sum_tree_level0_node0(
         .clk(clk),
-        .in_a(mult_36_partial_sum_out),
+        .in_a(memory_partial_sum_out),
         .in_b(clb_partial_sum_out),
         .out(out_level0_node0)
     );
@@ -170,7 +170,7 @@ module placer(input wire clk,
     wire [BUS_WIDTH-1:0] out_level0_node1;
     sum_tree_node sum_tree_level0_node1(
         .clk(clk),
-        .in_a(memory_partial_sum_out),
+        .in_a(mult_36_partial_sum_out),
         .in_b(23'd0),
         .out(out_level0_node1)
     );
