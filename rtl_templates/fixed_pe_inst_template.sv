@@ -54,6 +54,7 @@ weight_ram sum_ram_fixed_x(
 defparam sum_ram_fixed_x.DATA_WIDTH = $clog2((V/2)*F_io*N_io*D + 1);
 defparam sum_ram_fixed_x.N = N;
 defparam sum_ram_fixed_x.DELAY_CYCLES = {sum_ram_fixed_x_delay_cycles};
+defparam sum_ram_fixed_x.RAM_CYCLES = RAM_CYCLES;
 
 weight_ram sum_ram_fixed_y(
     .clk(clk),
@@ -66,3 +67,4 @@ weight_ram sum_ram_fixed_y(
 defparam sum_ram_fixed_y.DATA_WIDTH = $clog2((V/2)*F_io*N_io*D + 1);
 defparam sum_ram_fixed_y.N = N;
 defparam sum_ram_fixed_y.DELAY_CYCLES = {sum_ram_fixed_y_delay_cycles};
+defparam sum_ram_fixed_y.RAM_CYCLES = RAM_CYCLES;
