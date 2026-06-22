@@ -361,8 +361,8 @@ def fixed_pe_inst(placer_params,RAM_CYCLES,MULT_CYCLES,fixed_pe_load_enable_in,f
     # read in the template
     fixed_pe_inst_template = get_template_str("rtl_templates/fixed_pe_inst_template.sv")
 
-    sum_ram_fixed_x_delay_cycles = RAM_CYCLES + MULT_CYCLES + placer_params.MSAD + max(1,math.ceil(math.log2(placer_params.T))) - 1
-    sum_ram_fixed_y_delay_cycles = RAM_CYCLES + MULT_CYCLES + placer_params.MSAD + max(1,math.ceil(math.log2(placer_params.T))) - 1
+    sum_ram_fixed_x_delay_cycles = MULT_CYCLES + placer_params.MSAD + max(1,math.ceil(math.log2(placer_params.T)))
+    sum_ram_fixed_y_delay_cycles = MULT_CYCLES + placer_params.MSAD + max(1,math.ceil(math.log2(placer_params.T)))
 
     # populate the template
     fixed_pe_inst_str = fixed_pe_inst_template.format(load_enable_in=fixed_pe_load_enable_in,
@@ -857,9 +857,9 @@ def main():
     p.add_argument("-o", help="output dir",default="generated_rtl/")
     p.add_argument("--n_io", help="number of io", default=100)
     p.add_argument("--f_io", help="io fanin", default=1)
-    p.add_argument("--ram_cycles", help="ram cycles", default=2)
-    p.add_argument("--sum_coord_cycles", help="sum_coord cycles",default=1)
-    p.add_argument("--mult_cycles", help="mult cycles", default=2)
+    p.add_argument("--ram_cycles", help="ram cycles", default=5)
+    p.add_argument("--sum_coord_cycles", help="sum_coord cycles",default=2)
+    p.add_argument("--mult_cycles", help="mult cycles", default=4)
     p.add_argument("--fixed_sum_cycles", help="fixed sum cycles", default=1)
     args = p.parse_args()
 
