@@ -16,7 +16,7 @@ module placer_interface(input wire clk,
     assign ram_en = 1;
     assign ram_rst = 0;
     //*************************************************************************
-    localparam N = 12;
+    localparam N = 967;
     localparam NUM_OF_PACKETS = N + 2;
     localparam SIZE_OF_PACKET = N + 8;
     localparam SIZE_OF_UNLOAD = N;
@@ -33,7 +33,7 @@ module placer_interface(input wire clk,
 
 
     reg load_enable_in;
-    wire [16-1:0] unload_out;
+    wire [23-1:0] unload_out;
     wire complete;
     
     placer placer_inst(.clk(clk),

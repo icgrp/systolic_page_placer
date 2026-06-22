@@ -213,7 +213,7 @@ Modifications:
   <!-- ODIN II specific config ends -->
   <!-- Physical descriptions begin -->
   <layout>
-    <fixed_layout name="my_layout" width="6" height="6">
+    <fixed_layout name="my_layout" width="37" height="37">
       <!--Perimeter of 'io' blocks with 'EMPTY' blocks at corners-->
       <perimeter type="io" priority="100"/>
       <corners type="EMPTY" priority="101"/>
