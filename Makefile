@@ -1,13 +1,13 @@
 # Benchmark
-BENCHMARK_VERILOG=benchmarks/arm_core.v
+BENCHMARK_VERILOG=benchmarks/simple.v
 
 # Don't touch
 BENCHMARK_NAME=$(basename $(notdir $(BENCHMARK_VERILOG)))
 BENCHMARK_BLIF=$(CURDIR)/build/synth/$(BENCHMARK_NAME).blif
 
 # Placer parameters
-WIDTH=35
-HEIGHT=35
+WIDTH=4
+HEIGHT=4
 N_IO=800
 UPDATES=3
 SWAPS_PER_UPDATE=5

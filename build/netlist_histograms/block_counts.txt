@@ -1,3 +1,2 @@
-memory    24
-clb       866
-io        312
+clb       1
+io        3
