@@ -7,7 +7,7 @@ def compute_runtime(placer_params,num_of_updates,swaps_per_update,frequency):
 
     placer_params, sub_placer_params_dict = pp.read_params_from_file(placer_params)
 
-    cycles_per_swap = 10
+    cycles_per_swap = placer_params.CYCLES_PER_SWAP
     cycles_per_sort = 4*placer_params.D*np.ceil(np.log2(placer_params.D)) + 2*placer_params.D
     cycles_per_sum = placer_params.SCD + placer_params.WSRD + 2*placer_params.N
 
