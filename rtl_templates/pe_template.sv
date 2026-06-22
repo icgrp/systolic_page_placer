@@ -728,7 +728,7 @@ module {name}(input wire clk,
                 state <= STATE_SORT_X_COMPARE;
             end
 
-            broadcast <= temp_blk_id;
+            broadcast <= sort_swap ? speculated_temp_blk_id : temp_blk_id;
         end
         STATE_SORT_Y_COMPARE: begin
             // Y compare: decide whether to exchange temp_blk_id/temp_coord
@@ -768,7 +768,7 @@ module {name}(input wire clk,
                 state <= STATE_SORT_Y_COMPARE;
             end
 
-            broadcast <= temp_blk_id;
+            broadcast <= sort_swap ? speculated_temp_blk_id : temp_blk_id;
         end
         STATE_SORT_FINAL_X_COMPARE: begin
             // Final X compare: same compare/exchange operation as a normal X
@@ -808,7 +808,7 @@ module {name}(input wire clk,
                 state <= STATE_SORT_FINAL_X_COMPARE;
             end
 
-            broadcast <= temp_blk_id;
+            broadcast <= sort_swap ? speculated_temp_blk_id : temp_blk_id;
         end
         //********************************************************
         // Sum computation

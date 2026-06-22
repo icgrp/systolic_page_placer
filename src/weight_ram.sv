@@ -34,19 +34,16 @@ module weight_ram (input wire clk,
             if(counter < DELAY_CYCLES) begin
                 counter <= counter + 1;
             end
-            else if(address == N - 1) begin
-                address <= 0;
-            end
             else begin
-                address <= address + 1;
-            end
+                // Synchronous RAM read: counts as one RAM cycle.
+                output_pipeline[0] <= weights[address];
 
-            // Synchronous RAM read: counts as one RAM cycle.
-            output_pipeline[0] <= weights[address];
+                // Add RAM_CYCLES - 1 output pipeline stages.
+                for(op_i = 1; op_i < RAM_CYCLES; op_i = op_i + 1) begin
+                    output_pipeline[op_i] <= output_pipeline[op_i - 1];
+                end
 
-            // Add RAM_CYCLES - 1 output pipeline stages.
-            for(op_i = 1; op_i < RAM_CYCLES; op_i = op_i + 1) begin
-                output_pipeline[op_i] <= output_pipeline[op_i - 1];
+                address <= (address == N - 1) ? 0 : address + 1;
             end
         end
     end
