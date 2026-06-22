@@ -331,17 +331,17 @@ module {name}(input wire clk,
     // DSP pipelining
 
 
-    reg [$clog2(B_t+1)-1:0] sum_coord_pipeline [0:TEMP_COORD_CYCLES-1];
+    reg [$clog2(B_t+1)-1:0] sum_coord_pipeline [0:SUM_COORD_CYCLES-1];
     integer scp_i;
 
     always @(posedge clk) begin
         sum_coord_pipeline[0] <= sum_coord_comp;
 
-        for(scp_i = 1; scp_i < TEMP_COORD_CYCLES; scp_i = scp_i + 1) begin
+        for(scp_i = 1; scp_i < SUM_COORD_CYCLES; scp_i = scp_i + 1) begin
             sum_coord_pipeline[scp_i] <= sum_coord_pipeline[scp_i - 1];
         end
     end
-    assign sum_coord = sum_coord_pipeline[TEMP_COORD_CYCLES - 1];
+    assign sum_coord = sum_coord_pipeline[SUM_COORD_CYCLES - 1];
 
 
 
@@ -829,7 +829,7 @@ module {name}(input wire clk,
             end
             //********************************************************
             // Control
-            if(sum_cycle_counter == SUM_DELAY + RAM_CYCLES + N - TEMP_COORD_CYCLES - 1) begin
+            if(sum_cycle_counter == SUM_DELAY + RAM_CYCLES + N - SUM_COORD_CYCLES - 1) begin
                 weight_mode <= 1;
             end
             else if(sum_cycle_counter == (SCD + WSRD + 2*N - 1)) begin
