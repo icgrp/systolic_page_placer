@@ -29,6 +29,7 @@ defparam sub_placer_{ty}_inst.P = P;
 defparam sub_placer_{ty}_inst.MSAD = MSAD;
 defparam sub_placer_{ty}_inst.WSRD = WSRD;
 defparam sub_placer_{ty}_inst.RAM_CYCLES = RAM_CYCLES;
+defparam sub_placer_{ty}_inst.SUM_COORD_CYCLES = SUM_COORD_CYCLES;
 defparam sub_placer_{ty}_inst.MULT_CYCLES = MULT_CYCLES;
 defparam sub_placer_{ty}_inst.FIXED_SUM_CYCLES = FIXED_SUM_CYCLES;
 defparam sub_placer_{ty}_inst.SCD = SCD;

@@ -21,6 +21,7 @@ module placer(input wire clk,
     parameter integer MSAD = {MSAD};
     parameter integer WSRD = {WSRD};
     parameter integer RAM_CYCLES = {RAM_CYCLES};
+    parameter integer SUM_COORD_CYCLES = {SUM_COORD_CYCLES};
     parameter integer MULT_CYCLES = {MULT_CYCLES};
     parameter integer FIXED_SUM_CYCLES = {FIXED_SUM_CYCLES};
     parameter integer SCD = {SCD};

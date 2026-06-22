@@ -1,6 +1,6 @@
 module weight_ram (input wire clk,
                    input wire enable_weights,
-                   output reg [DATA_WIDTH-1:0] out_weight,
+                   output wire [DATA_WIDTH-1:0] out_weight,
 
                    input wire load,
                    input wire [DATA_WIDTH-1:0] in_weight
@@ -9,13 +9,17 @@ module weight_ram (input wire clk,
     parameter integer DATA_WIDTH = -1;
     parameter integer N = -1;
     parameter integer DELAY_CYCLES = -1;
-
-    reg [DATA_WIDTH-1:0] out_pipeline;
+    parameter integer RAM_CYCLES = -1;
     
     reg [$clog2(DELAY_CYCLES + 2)-1:0] counter = 0;
     reg [$clog2(N)-1:0] address = 0;
 
+    (* ram_style = "block" *)
     reg [DATA_WIDTH-1:0] weights[0:N-1];
+
+    // Stage 0 is the registered RAM read
+    reg [DATA_WIDTH-1:0] output_pipeline [0:RAM_CYCLES-1];
+    integer op_i;
 
     always @(posedge clk) begin
         if(load) begin
@@ -30,17 +34,23 @@ module weight_ram (input wire clk,
             if(counter < DELAY_CYCLES) begin
                 counter <= counter + 1;
             end
-            else begin
-                if(address == N - 1) begin
-                    address <= 0;
-                end
-                else begin
-                    address <= address + 1;
-                end
+            else if(address == N - 1) begin
+                address <= 0;
             end
-            out_pipeline <= weights[address];
+            else begin
+                address <= address + 1;
+            end
+
+            // Synchronous RAM read: counts as one RAM cycle.
+            output_pipeline[0] <= weights[address];
+
+            // Add RAM_CYCLES - 1 output pipeline stages.
+            for(op_i = 1; op_i < RAM_CYCLES; op_i = op_i + 1) begin
+                output_pipeline[op_i] <= output_pipeline[op_i - 1];
+            end
         end
-        out_weight <= out_pipeline;
     end
+
+    assign out_weight = output_pipeline[RAM_CYCLES - 1];
 
 endmodule

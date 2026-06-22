@@ -43,8 +43,9 @@ module {name}(input wire clk,
 
     parameter integer MSAD = -1;                // Maximum Sub-Array Depth
     parameter integer WSRD = -1;                // worst sum return depth, the number of cycles for a newly computed sum to arrive at the input of the farthest PE across all sub-arrays.    
-    parameter integer RAM_CYCLES = -1;          // should be set to 2
-    parameter integer MULT_CYCLES = -1;         // should be set to 1
+    parameter integer RAM_CYCLES = -1;
+    parameter integer SUM_COORD_CYCLES = -1;
+    parameter integer MULT_CYCLES = -1;
     parameter integer FIXED_SUM_CYCLES = -1;    // should be set to 1
     parameter integer SCD = -1;
 
@@ -144,11 +145,6 @@ module {name}(input wire clk,
     // Summing Registers
 
     reg weight_mode;
-
-    reg [$clog2(B_t+1)-1:0]                 sum_coord;
-    //reg [$clog2(B_t+1)-1:0]                 sum_coord_pipelined;
-    reg [$clog2(V*B_t+1)-1:0]               weighted_coord;
-    reg [$clog2(V*B_t+1)-1:0]               weighted_coord_pipelined;
 
     reg [$clog2(SCD+WSRD+(2*N)+1)-1:0]      sum_cycle_counter;
     reg [$clog2(SCD+(H_t-1)+N+1)-1:0]       sample_x_sum_cycle;
@@ -313,6 +309,8 @@ module {name}(input wire clk,
     wire sort_iter_done = (sort_itter_counter == ($clog2(D) - 1));
     //********************************************************
     // Summing logic
+    wire [$clog2(B_t+1)-1:0] sum_coord;
+    wire [$clog2(V*B_t+1)-1:0] weighted_coord;
 
     wire [$clog2(B_t+1)-1:0] sum_coord_comp = (weight_mode == 0) ? temp_coord[2*$clog2(B_t+1)-1:$clog2(B_t+1)] : temp_coord[$clog2(B_t+1)-1:0];
     wire [$clog2(V*B_t+1)-1:0] weighted_coord_comp = in_weight*sum_coord;
@@ -331,14 +329,33 @@ module {name}(input wire clk,
     //#########################################################################################################################
 
     // DSP pipelining
-    always @(posedge clk) begin 
-        sum_coord <= sum_coord_comp;
-    end
+
+
+    reg [$clog2(B_t+1)-1:0] sum_coord_pipeline [0:SUM_COORD_CYCLES-1];
+    integer scp_i;
 
     always @(posedge clk) begin
-        weighted_coord_pipelined <= weighted_coord_comp;
-        weighted_coord <= weighted_coord_pipelined;
+        sum_coord_pipeline[0] <= sum_coord_comp;
+
+        for(scp_i = 1; scp_i < SUM_COORD_CYCLES; scp_i = scp_i + 1) begin
+            sum_coord_pipeline[scp_i] <= sum_coord_pipeline[scp_i - 1];
+        end
     end
+    assign sum_coord = sum_coord_pipeline[SUM_COORD_CYCLES - 1];
+
+
+
+    reg [$clog2(V*B_t+1)-1:0] multiply_pipeline [0:MULT_CYCLES-1];
+    integer mp_i;
+
+    always @(posedge clk) begin
+        multiply_pipeline[0] <= weighted_coord_comp;
+
+        for(mp_i = 1; mp_i < MULT_CYCLES; mp_i = mp_i + 1) begin
+            multiply_pipeline[mp_i] <= multiply_pipeline[mp_i - 1];
+        end
+    end
+    assign weighted_coord = multiply_pipeline[MULT_CYCLES - 1];
 
     //#########################################################################################################################
     // STATE MACHINE
@@ -812,7 +829,7 @@ module {name}(input wire clk,
             end
             //********************************************************
             // Control
-            if(sum_cycle_counter == SUM_DELAY + RAM_CYCLES + N - 1) begin
+            if(sum_cycle_counter == SUM_DELAY + RAM_CYCLES + N - SUM_COORD_CYCLES - 1) begin
                 weight_mode <= 1;
             end
             else if(sum_cycle_counter == (SCD + WSRD + 2*N - 1)) begin

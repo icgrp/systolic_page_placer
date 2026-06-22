@@ -380,6 +380,7 @@ def create_placer(systolic_grid_info_file,
                   output_dir,
                   N_io, F_io,
                   RAM_CYCLES,
+                  SUM_COORD_CYCLES,
                   MULT_CYCLES,
                   FIXED_SUM_CYCLES):
     #########################################
@@ -759,7 +760,7 @@ def create_placer(systolic_grid_info_file,
     # Create placer module
     log.blue("[Creating placer module]")
     placer = placer_template.format(N=placer_params.N,T=placer_params.T,D=placer_params.D,B=placer_params.B,V=placer_params.V,MAX_K=placer_params.K,P=placer_params.P,N_io=N_io,F_io=F_io,
-                                    MSAD=placer_params.MSAD,WSRD=placer_params.WSRD,RAM_CYCLES=RAM_CYCLES,MULT_CYCLES=MULT_CYCLES,FIXED_SUM_CYCLES=FIXED_SUM_CYCLES,SCD=placer_params.SCD,
+                                    MSAD=placer_params.MSAD,WSRD=placer_params.WSRD,RAM_CYCLES=RAM_CYCLES,SUM_COORD_CYCLES=SUM_COORD_CYCLES,MULT_CYCLES=MULT_CYCLES,FIXED_SUM_CYCLES=FIXED_SUM_CYCLES,SCD=placer_params.SCD,
                                     BUS_WIDTH=placer_params.BUS_WIDTH,MAX_NUM_OF_UPDATES=500,MAX_SWAPS_PER_UPDATE=500,
                                     sub_placers=sub_placers,tree_of_trees=tree_of_trees,fixed_pe=fixed_pe,complete=complete)
     
@@ -857,9 +858,22 @@ def main():
     p.add_argument("--n_io", help="number of io", default=100)
     p.add_argument("--f_io", help="io fanin", default=1)
     p.add_argument("--ram_cycles", help="ram cycles", default=2)
-    p.add_argument("--mult_cycles", help="mult cycles", default=3)
+    p.add_argument("--sum_coord_cycles", help="sum_coord cycles",default=1)
+    p.add_argument("--mult_cycles", help="mult cycles", default=2)
     p.add_argument("--fixed_sum_cycles", help="fixed sum cycles", default=1)
     args = p.parse_args()
+
+    # ensure params are legal
+    if(not (int(args.ram_cycles) > 0)):
+        log.red("[Error: ram_cycles must be > 0]")
+        return
+    if(not (int(args.sum_coord_cycles) > 0) or
+       not (int(args.sum_coord_cycles) <= int(args.ram_cycles))):
+        log.red("[Error: sum_coord_cycles must be > 0 and <= ram_cycles]")
+        return
+    if(not (int(args.mult_cycles) > 0)):
+        log.red("[Error: mult_cycles must be > 0]")
+        return
 
     # sanitize the output dir name
     output_dir = args.o if args.o[-1] == "/" else (args.o + "/")
@@ -873,6 +887,7 @@ def main():
                   int(args.n_io),
                   int(args.f_io),
                   int(args.ram_cycles),
+                  int(args.sum_coord_cycles),
                   int(args.mult_cycles),
                   int(args.fixed_sum_cycles))    
 
