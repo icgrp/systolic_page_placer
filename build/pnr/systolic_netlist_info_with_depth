@@ -1,6 +1,0 @@
-Netlist_File: simple.net Netlist_ID: SHA256:5b9a4757e4b2c15749cf2fb6b2becabbaefd9d117c9555f996dbd62703c431fd
-blk_name blk_type blk_id, connected_blk_name depth, connected_blk_name depth, ...
-n7 clb 0,i 1,out:o 1,clk 1
-out:o io 1,n7 1
-clk io 2,n7 1
-i io 3,n7 1
