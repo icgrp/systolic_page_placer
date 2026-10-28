@@ -141,7 +141,7 @@ vtr:
 	--route \
 	--route_chan_width ${ROUTE_CHAN_WIDTH})
 
-# clean:
-# 	@rm -rf build/
+clean:
+	@rm -rf build/
 
 .PHONY: init rtl bit rtlsim pysim diff physical route_pysim route_rtlsim vtr clean
