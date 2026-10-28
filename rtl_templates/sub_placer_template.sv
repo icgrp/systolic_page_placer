@@ -30,6 +30,7 @@ module sub_placer_{ty}(input wire clk,
     parameter integer MSAD = -1;                // Maximum Sub-Array Depth
     parameter integer WSRD = -1;                // worst sum return depth, the number of cycles for a newly computed sum to arrive at the input of the farthest PE across all sub-arrays.    
     parameter integer RAM_CYCLES = -1;          // should be set to 1
+    parameter integer SUM_COORD_CYCLES = -1;
     parameter integer MULT_CYCLES = -1;         // should be set to 0 for now
     parameter integer FIXED_SUM_CYCLES = -1;    // should be set to 1
     parameter integer SCD = -1;

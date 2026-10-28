@@ -58,6 +58,7 @@ defparam pe_x{pe_x}_y{pe_y}.P = P;
 defparam pe_x{pe_x}_y{pe_y}.MSAD = MSAD;
 defparam pe_x{pe_x}_y{pe_y}.WSRD = WSRD;
 defparam pe_x{pe_x}_y{pe_y}.RAM_CYCLES = RAM_CYCLES;
+defparam pe_x{pe_x}_y{pe_y}.SUM_COORD_CYCLES = SUM_COORD_CYCLES;
 defparam pe_x{pe_x}_y{pe_y}.MULT_CYCLES = MULT_CYCLES;
 defparam pe_x{pe_x}_y{pe_y}.FIXED_SUM_CYCLES = FIXED_SUM_CYCLES;
 defparam pe_x{pe_x}_y{pe_y}.SCD = SCD;
@@ -88,6 +89,7 @@ defparam pe_x{pe_x}_y{pe_y}.LOAD_PHASE = {load_phase};
 defparam pe_x{pe_x}_y{pe_y}.UNLOAD_PHASE = {unload_phase};
 defparam pe_x{pe_x}_y{pe_y}.LOAD_DELAY = {load_delay};
 defparam pe_x{pe_x}_y{pe_y}.START_DELAY = {start_delay};
+defparam pe_x{pe_x}_y{pe_y}.SUM_DELAY = MSAD - ($clog2(W_t) + H_t) + {pe_y};
 
 // weight ram
 weight_ram weight_ram_x{pe_x}_y{pe_y}(
@@ -101,3 +103,4 @@ weight_ram weight_ram_x{pe_x}_y{pe_y}(
 defparam weight_ram_x{pe_x}_y{pe_y}.DATA_WIDTH = $clog2(V + 1);
 defparam weight_ram_x{pe_x}_y{pe_y}.N = N;
 defparam weight_ram_x{pe_x}_y{pe_y}.DELAY_CYCLES = MSAD - ($clog2(W_t) + H_t) + {pe_y};
+defparam weight_ram_x{pe_x}_y{pe_y}.RAM_CYCLES = RAM_CYCLES;

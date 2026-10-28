@@ -9,8 +9,8 @@ BENCHMARK_BLIF=$(CURDIR)/build/synth/$(BENCHMARK_NAME).blif
 WIDTH=35
 HEIGHT=35
 N_IO=800
-UPDATES=100
-SWAPS_PER_UPDATE=10
+UPDATES=3
+SWAPS_PER_UPDATE=5
 INITIAL_TEMP=65533
 
 # Don't touch
@@ -64,7 +64,7 @@ bit:
 rtlsim:
 #	simulation
 	@mkdir -p build/rtlsim_out/
-	@iverilog -Wall -o sim.vvp build/generated_rtl/tb.sv build/generated_rtl/placer.sv build/generated_rtl/sub_placer_modules/* build/generated_rtl/specialized_pe_modules/* src/* -s test_tb
+	@iverilog -Wall -s test_tb -o sim.vvp build/generated_rtl/tb.sv build/generated_rtl/placer.sv build/generated_rtl/sub_placer_modules/* build/generated_rtl/specialized_pe_modules/* src/*
 	@vvp sim.vvp -fst
 	@mv sim.vvp build/rtlsim_out/
 	@mv trace.fst build/rtlsim_out/
@@ -141,7 +141,7 @@ vtr:
 	--route \
 	--route_chan_width ${ROUTE_CHAN_WIDTH})
 
-clean:
-	@rm -rf build/
+# clean:
+# 	@rm -rf build/
 
 .PHONY: init rtl bit rtlsim pysim diff physical route_pysim route_rtlsim vtr clean
