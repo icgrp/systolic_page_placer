@@ -6,11 +6,12 @@ BENCHMARK_NAME=$(basename $(notdir $(BENCHMARK_VERILOG)))
 BENCHMARK_BLIF=$(CURDIR)/build/synth/$(BENCHMARK_NAME).blif
 
 # Placer parameters
+F_CLK=200000000
 WIDTH=35
 HEIGHT=35
 N_IO=800
-UPDATES=3
-SWAPS_PER_UPDATE=5
+UPDATES=25
+SWAPS_PER_UPDATE=10
 INITIAL_TEMP=65533
 
 # Don't touch
@@ -94,7 +95,7 @@ diff_trace:
 #######################################################################################################################################################################################################
 fpga:
 	@mkdir -p build/fpga_out/
-	@python3 scripts/load.py build/bitstream/compressed_bitstream.txt build/fpga_out/unload.txt build/generated_rtl/params.json ${UPDATES} ${SWAPS_PER_UPDATE} 200000000
+	@python3 scripts/load.py build/bitstream/compressed_bitstream.txt build/fpga_out/unload.txt build/generated_rtl/params.json ${UPDATES} ${SWAPS_PER_UPDATE} ${F_CLK}
 	@python3 scripts/process_unload.py ${SYSTOLIC_GRID_INFO} $(SYSTOLIC_NETLIST_INFO) build/generated_rtl/params.json build/fpga_out/unload.txt build/fpga_out/unload.place
 	@cat build/fpga_out/unload.place $(SYSTOLIC_IO_PLACE) > build/fpga_out/complete_unload.place
 #######################################################################################################################################################################################################
