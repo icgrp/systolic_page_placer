@@ -28,7 +28,7 @@ def main():
     ################################################################################
     log.blue("[Writing firmware header file]")
     with open(args.header_file,"w") as f:
-        f.write("#define N {}".format(placer_params.N))
+        f.write(f"#define N {placer_params.N}")
 
 ################################################################################################
 if __name__ == "__main__":

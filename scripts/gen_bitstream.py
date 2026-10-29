@@ -64,8 +64,7 @@ def create_bitstream(netlist,
 
         x_sums, y_sums = gen_io_ram_data(netlist,io_placement,ty_nt_offset_lst,placer_params)
 
-        cycles_per_swap = 10
-        swap_cycle_target = swaps_per_update*cycles_per_swap
+        swap_cycle_target = swaps_per_update*placer_params.CYCLES_PER_SWAP
 
         ########
         # write first packet for the fixed pe

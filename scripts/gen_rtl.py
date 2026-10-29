@@ -649,7 +649,11 @@ def create_placer(systolic_grid_info_file,
         BUS_WIDTH = max(math.ceil(math.log2(2*P + K*R_m + 1)) + 1, 16)
 
         # Package the placer params
-        placer_params = pp.PlacerParams(N,N_io,F_io,T,V,K,P,D,B,MSAD,WSRD,SCD,BUS_WIDTH)
+        placer_params = pp.PlacerParams(N,N_io,F_io,T,V,K,P,D,B,MSAD,WSRD,SCD,BUS_WIDTH,
+                                        RAM_CYCLES,SUM_COORD_CYCLES,MULT_CYCLES,
+                                        CYCLES_PER_SWAP=10,
+                                        MAX_NUM_OF_UPDATES=500,
+                                        MAX_SWAPS_PER_UPDATE=500)
 
         return (placer_params, ty_to_sub_placer_params)
     #########################################
@@ -696,7 +700,7 @@ def create_placer(systolic_grid_info_file,
     log.blue("[Computing RTL parameters]")
     placer_params, ty_to_sub_placer_params = compute_params(grid_info,arch_info,N_io,F_io,ty_to_adjusted_specializations)
     log.green("[Computation of parameters complete]")
-    pp.write_params_to_file("{}params.txt".format(output_dir),placer_params,[x for x in ty_to_sub_placer_params.values()])
+    pp.write_params_to_file(f"{output_dir}params.json",placer_params,[x for x in ty_to_sub_placer_params.values()])
     log.blue("[Parameters written to file]")
     placer_params.print()
 
@@ -761,7 +765,7 @@ def create_placer(systolic_grid_info_file,
     log.blue("[Creating placer module]")
     placer = placer_template.format(N=placer_params.N,T=placer_params.T,D=placer_params.D,B=placer_params.B,V=placer_params.V,MAX_K=placer_params.K,P=placer_params.P,N_io=N_io,F_io=F_io,
                                     MSAD=placer_params.MSAD,WSRD=placer_params.WSRD,RAM_CYCLES=RAM_CYCLES,SUM_COORD_CYCLES=SUM_COORD_CYCLES,MULT_CYCLES=MULT_CYCLES,FIXED_SUM_CYCLES=FIXED_SUM_CYCLES,SCD=placer_params.SCD,
-                                    BUS_WIDTH=placer_params.BUS_WIDTH,MAX_NUM_OF_UPDATES=500,MAX_SWAPS_PER_UPDATE=500,
+                                    BUS_WIDTH=placer_params.BUS_WIDTH,MAX_NUM_OF_UPDATES=placer_params.MAX_NUM_OF_UPDATES,MAX_SWAPS_PER_UPDATE=placer_params.MAX_SWAPS_PER_UPDATE,
                                     sub_placers=sub_placers,tree_of_trees=tree_of_trees,fixed_pe=fixed_pe,complete=complete)
     
     # Output the placer module file
@@ -893,11 +897,11 @@ def main():
 
     # Create the Vivado interface RTL
     create_vivado_interface(output_dir,
-                            output_dir+"params.txt")
+                            output_dir+"params.json")
 
     # Create the testbench RTL
     create_testbench(output_dir,
-                     output_dir+"params.txt",
+                     output_dir+"params.json",
                      args.grid_info)
 ################################################################################################
 if __name__ == "__main__":

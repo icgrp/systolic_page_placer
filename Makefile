@@ -53,12 +53,12 @@ rtl:
 #######################################################################################################################################################################################################
 firmware:
 	@mkdir -p build/vitis_firmware_export/
-	@python3 scripts/gen_firmware.py build/generated_rtl/params.txt build/vitis_firmware_export/systolic_params.h
+	@python3 scripts/gen_firmware.py build/generated_rtl/params.json build/vitis_firmware_export/systolic_params.h
 	@cp vitis_firmware/main.c build/vitis_firmware_export/
 #######################################################################################################################################################################################################
 bit:
 	@mkdir -p build/bitstream
-	@python3 scripts/gen_bitstream.py ${SYSTOLIC_GRID_INFO} $(SYSTOLIC_NETLIST_INFO) ${SYSTOLIC_IO_PLACE} $(PLACER_INIT) build/generated_rtl/params.txt build/bitstream/bitstream.txt --num_of_updates $(UPDATES) --swaps_per_update $(SWAPS_PER_UPDATE) --initial_temp $(INITIAL_TEMP)
+	@python3 scripts/gen_bitstream.py ${SYSTOLIC_GRID_INFO} $(SYSTOLIC_NETLIST_INFO) ${SYSTOLIC_IO_PLACE} $(PLACER_INIT) build/generated_rtl/params.json build/bitstream/bitstream.txt --num_of_updates $(UPDATES) --swaps_per_update $(SWAPS_PER_UPDATE) --initial_temp $(INITIAL_TEMP)
 	@python3 scripts/compress_bitstream.py build/bitstream/bitstream.txt build/bitstream/compressed_bitstream.txt
 #######################################################################################################################################################################################################
 rtlsim:
@@ -70,7 +70,7 @@ rtlsim:
 	@mv trace.fst build/rtlsim_out/
 	@mv trace.csv build/rtlsim_out/
 	@mv unload.txt build/rtlsim_out/
-	@python3 scripts/process_unload.py ${SYSTOLIC_GRID_INFO} $(SYSTOLIC_NETLIST_INFO) build/generated_rtl/params.txt build/rtlsim_out/unload.txt build/rtlsim_out/unload.place
+	@python3 scripts/process_unload.py ${SYSTOLIC_GRID_INFO} $(SYSTOLIC_NETLIST_INFO) build/generated_rtl/params.json build/rtlsim_out/unload.txt build/rtlsim_out/unload.place
 	@cat build/rtlsim_out/unload.place $(SYSTOLIC_IO_PLACE) > build/rtlsim_out/complete_unload.place
 
 #	check   
@@ -94,8 +94,8 @@ diff_trace:
 #######################################################################################################################################################################################################
 fpga:
 	@mkdir -p build/fpga_out/
-	@python3 scripts/load.py build/bitstream/compressed_bitstream.txt build/fpga_out/unload.txt build/generated_rtl/params.txt ${UPDATES} ${SWAPS_PER_UPDATE} 200000000
-	@python3 scripts/process_unload.py ${SYSTOLIC_GRID_INFO} $(SYSTOLIC_NETLIST_INFO) build/generated_rtl/params.txt build/fpga_out/unload.txt build/fpga_out/unload.place
+	@python3 scripts/load.py build/bitstream/compressed_bitstream.txt build/fpga_out/unload.txt build/generated_rtl/params.json ${UPDATES} ${SWAPS_PER_UPDATE} 200000000
+	@python3 scripts/process_unload.py ${SYSTOLIC_GRID_INFO} $(SYSTOLIC_NETLIST_INFO) build/generated_rtl/params.json build/fpga_out/unload.txt build/fpga_out/unload.place
 	@cat build/fpga_out/unload.place $(SYSTOLIC_IO_PLACE) > build/fpga_out/complete_unload.place
 #######################################################################################################################################################################################################
 diff_placement:
